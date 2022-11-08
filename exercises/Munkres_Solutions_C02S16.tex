@@ -1,0 +1,108 @@
+\documentclass[12pt]{article}
+\usepackage{latexsym, amssymb, amsmath, amsfonts, amscd, amsthm}
+\usepackage{enumerate}
+\usepackage[margin=1in]{geometry}
+\usepackage{calrsfs}
+\DeclareMathAlphabet{\pazocal}{OMS}{zplm}{m}{n}
+\newcommand{\La}{\mathcal{L}}
+\newcommand{\Lb}{\pazocal{L}}
+\linespread{1} %Change the line spacing only if instructed to do so.
+\newenvironment{problem}[2][Problem]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\bfseries #1 #2:}]
+	}
+{
+	\end{trivlist}
+	}
+
+\newenvironment{solution}[1][Solution]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\itshape #1:}]
+	}
+	{
+	\end{trivlist}
+}
+
+\newenvironment{collaborators}[1][Collaborator(s)]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\bfseries #1:}]
+	}
+	{
+	\end{trivlist}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+%    You need only modify code below this block.
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+%%%%%%%%%%%%%%%
+%
+% Modify the title, author, and due date for each assignment:
+%
+%%%%%%%%%%%%%%%
+\title{Munkres Chapter 2.16 exercises}
+\author{Cherie Li}
+\date{06/01/2018}
+
+%%%%%%%%%%%%%%%
+%
+% Do not modify:
+%
+%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+\newpage
+%%%%%%%%%%%%%%%
+%
+% Your problem statements and solutions start here.
+% Use the \newpage command between problems so that
+% each of your problems begins on its own page.
+%
+%%%%%%%%%%%%%%%
+%Provide the problem statement.
+%
+%
+\begin{problem}[Exercise]{2.16.1}	
+	Show that if $Y$ is a subspace of $X$, and $A$ is a subset of $Y$, then the topology $A$ inherits as a subspace of $Y$ is the same as the topology it inherits as a subspace of $X$. 
+\end{problem}
+\begin{solution} 
+	Let $X$ be a set with topology $\mathcal{T}$. Let $Y$ be a subspace of $X$ and let the subspace topology $\mathcal{T}_y = \lbrace{Y \cap U | U \in \mathcal{T}\rbrace}$. Define the topology $A$ inherits as a subspace of $Y$ by $\mathcal{T}_1 = \lbrace{A \cap W | W \in \mathcal{T}_y\rbrace}$ and the topology $A$ inherits as a subspace of $X$ by $\mathcal{T}_2 = \lbrace{A \cap U | U \in \mathcal{T}\rbrace}$. We want to show that $\mathcal{T}_1 = \mathcal{T}_2$. Let $F \subset \mathcal{T}_1$. Then there exists open set $U \subseteq T$ such that $F = A \cap (Y \cap U) = (A \cap Y) \cap U$. Since $A \subseteq Y$, $F = A \cap U$ and is open in $\mathcal{T}$. Let $V \subset \mathcal{T}_2$. Then there exists open set $U \in \mathcal{T}$ such that $V = A \cap U$. Notice that $A \subseteq Y$, so $A \cap Y = A$, so $V = (A\cap Y)\cap U = A \cap (Y\cap U)$ and is open in $\mathcal{T}_1$. Since we have shown both ways, $\mathcal{T}_1 = \mathcal{T}_2$. 
+\end{solution}
+\begin{problem}[Exercise]{2.16.4}
+A map $f: X \rightarrow Y$ is said to be an \textbf{open map} if for every open set $U$ of $X$, the set $f(U)$ is open in $Y$. Show that $\pi_1: X \times Y \rightarrow X$ and $\pi_2: X \times Y \rightarrow Y$ are open maps.
+\end{problem}
+\begin{solution}
+Let $X, Y$ be sets. Let $\mathcal{B}, \mathcal{C}$ be bases for the topologies $\mathcal{T}_1, \mathcal{T}_2$ on $X$ and $Y$ respectively. By Theorem 15.1, $\mathcal{B} \times \mathcal{C}$ is a basis for the topology of $X \times Y$. Let $U \subset X \times Y$ be an open set in the topology of $X \times Y$. By Lemma 13.1, there exists $\lbrace{B_i\rbrace}, \lbrace{C_i\rbrace}$, where each $B_i$ and each $C_i$ belong to $\mathcal{B, C}$ respectively such that $U = (\cup B_i, \cup C_i)$.  Notice that $\pi_1(U) = \pi_1(\cup B_i) = \cup f(B_i) = \cup B_i$. Since $B_i$ are basis elements for $\mathcal{T}_1$, they are open sets. The proof for $\pi_2$ is symmetrical. 
+\end{solution}
+\begin{problem}[Exercise]{2.16.5}	
+	Let $X$ and $X'$ denote a single set in the topologies $\mathcal{T}$ and $\mathcal{T}'$ respectively; let $Y$ and $Y'$ denote a single set in the topologies $\mathcal{U}$ and $\mathcal{U}'$, respectively. Assume these sets are nonempty. 
+	\begin{enumerate}[(a)]
+		\item Show that if $\mathcal{T}' \supset \mathcal{T}$ and $\mathcal{U}' \supset \mathcal{U}$, then the product topology on $X' \times Y'$ is finer than the product topology on $X \times Y$. 
+		\item Does the converse of $\left(a\right)$ hold? Justify your answer. 
+	\end{enumerate}
+\end{problem}
+\begin{solution}	
+	Let $X$ be a set with topologies $\mathcal{T}$ and $\mathcal{T}'$ and let $Y$ be a set with topologies $\mathcal{U}$ and $\mathcal{U}'$. Let $\mathcal{B', B, C', C}$ be bases for $\mathcal{T, T', U', U}$ respectively.  Consider the product topology $X \times Y$. Let $(x,y)$ be an arbitrary element of the set $X \times Y$.  Since $\mathcal{T'} \supset \mathcal{T}$ by definition of finer, by lemma 13.3, for all $x \in X$, and for basis element $B \in \mathcal{B}$, where $x \in B$, there exists $B' \in \mathcal{B'}$ such that $x \in B' \subset B$. Similarly, for all $y \in Y$, and for basis element $C \in \mathcal{C}$, where $y \in C$, there exists basis element $C'\in \mathcal{C}'$ such that $y \in C' \subset C$. We want to show that product topology $X' \times Y' \supset X \times Y$. By Theorem 15.1, $\mathcal{B}' \times \mathcal{C}'$ is a basis for $X'\times Y'$ and $\mathcal{B} \times \mathcal{C}$ is a basis for $X \times Y$. There exists basis element $(B_\alpha , C_\beta)$ such that $x \in (B_\alpha , C_\beta)$ by definition of basis. Then there also exist basis elements, since $\mathcal{T}' \supset \mathcal{T}$ and $\mathcal{U}' \supset \mathcal{U}$ such that $x \in B'_\alpha$, $y \in C'_\beta$, so $(x,y) \in (B'_\alpha, C'_\alpha)$ as well as $(B'_\alpha, C'_\alpha) \subset (B_\alpha, C_\alpha)$ since $B'_\alpha \subset C'_\alpha$ and $B_\alpha \subset C_\alpha$. Since $(x, y)$ was arbitrary, for all $(x_i, y_i) \in X \times Y$, where $(x_i, y_i) \in (B_\alpha, C_\beta)$, there exists basis elements $(B'_\alpha, C'_\alpha)$ such that $(x_i, y_i ) \in (B'_\alpha, C'_\alpha) \subset (B_\alpha, C_\beta)$, so by Lemma 13.3, $X' \times Y'\supset X \times Y$. 
+\end{solution}
+\begin{problem}[Exercise]{2.16.10}
+	Let $I = [0,1]$. Compare the product topology on $I \times I$, the dictionary order topology on $I\times I$, and the topology $I \times I$ inherits as a subspace of the dictionary order of $\mathbb{R} \times \mathbb{R}$. 
+\end{problem}
+\begin{solution}
+	Let $I = [0,1]$. Notice that the subspace of the dictionary topology contains intervals of the form $\lbrace{a\rbrace} \times (a, b]$ and $[a, b) \times \lbrace{b\rbrace}$, whereas the order topology does not, except for $\lbrace{0\rbrace} \times [0, b)$ and ${1} \times (a, 1]$, where $a < 1$ and $b > 0$. Claim: the subspace dictionary topology is finer than the order topology. We want to show that for $x \in I \times I$, where $\mathcal{B}$ is a basis for the order topology and $x \in B \subset \mathcal{B}$, there exists basis element $C \subset \mathcal{C}$, where $\mathcal{C}$ is a basis for the dictionary topology such that $x \in C \subset B$. By definition of order topology, the basis is for the order topology on $I \times I$ is all open intervals $(a,b)$ where $a > \lbrace{0,0\rbrace}$ and $b < \lbrace{1,1\rbrace}$, all open intervals of the form $[\lbrace{0,0\rbrace}, b)$ and all open intervals of the form $(a, {1,1})$. Notice that open intervals are open in both topologies. Now consider $x \in [\lbrace{0,0\rbrace}, b)$. Notice that there is some $\epsilon$ such that $x \in [\lbrace{0,0\rbrace}, b-\epsilon) \subset [\lbrace{0,0\rbrace}, b)$.  Similarly, $x \in (a, \lbrace{1,1\rbrace}]$, there exists some $\epsilon$ such that $x \in (a + \epsilon, \lbrace{1,1\rbrace}] \subset (a, \lbrace{1,1\rbrace}]$. However, conversely, consider the element ${\frac{1}{4}} \times (\frac{1}{2}, 2) \cap (\frac{1}{4}, \frac{1}{2}) \times (\frac{1}{2}, \frac{3}{4}) = \frac{1}{4} \times (\frac{1}{4}, 1)]$. Although there exists an open interval in the order topology that contains the point $(\frac{1}{4}, 1)$, then it is of the form $(\frac{1}{4}, \frac{3}{4}) \times (c,d)$, where $c > \frac{1}{4}$ and $d > 1$. Therefore, the dictionary topology subspace is strictly finer than the order topology. \\
+	\par Now we compare the product topology with the dictionary order topology on $I \times I$. Notice that any element in the product topology is the product of two open sets $(a,b)$ and $(c,d)$. Consider the set $\lbrace{\frac{1}{3}\rbrace} \times (0, 1/2)$. This set is open in the dictionary order topology but not in the product topology, since any basis element that contains $\lbrace{\frac{1}{3} \rbrace}$ is not contained in $\lbrace{\frac{1}{3}\rbrace} \times (0, 1/2)$. Now, given the set $[0,1] \times [0,\frac{1}{4})$ in the product topology, notice that $[0,1]$ is contained in any element of the form $[0, b)$ in the order topology, however $b > (0,1)$, so, $(0,b) \not\subset [0,1] \times [0,\frac{1}{4})$. Therefore, the 1st and 2nd topology are not comparable. \\
+	\par Finally, we compare the product topology with the subspace of the dictionary order topology. Note that unlike the product topology, the end points are contained, so the product topology is contained in dictionary order topology. We can always find arbitrary union to give us product of open intervals. However, conversely, we know that the third topology is finer than the second, and the second is not contained in the first, so the third is not contained in the first. Then, the third topology is strictly finer than the 1st topology. 
+\label{key}				
+\end{solution}
+\end{document}

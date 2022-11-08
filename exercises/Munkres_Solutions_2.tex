@@ -1,0 +1,280 @@
+% Problems modified or copied from ``An Inquiry-Based Approach to Abstract Algebra'' by Dana Ernst.
+% See: https://github.com/dcernst/IBL-AbstractAlgebra
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+%    This is the preamble. You do not need to
+%    modify anything here.
+%    If you've never used LaTeX before, paste the
+%    contents of this document here: 
+%    https://goo.gl/ahkpeB
+%
+%    (In a .tex document at overleaf.com)
+%    
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[12pt]{article}
+\usepackage{latexsym, amssymb, amsmath, amsfonts, amscd, amsthm}
+\usepackage{enumerate,tikz}
+\usetikzlibrary{arrows,automata,positioning}
+\usepackage[margin=1in]{geometry}
+
+\definecolor{darkblue}{rgb}{0, 0, .6}
+\definecolor{grey}{rgb}{.7, .7, .7}
+\linespread{1} %Change the line spacing only if instructed to do so.
+
+\newenvironment{problem}[2][Problem]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\bfseries #1 #2:}]
+	}
+{
+	\end{trivlist}
+	}
+
+\newenvironment{solution}[1][Solution]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\itshape #1:}]
+	}
+	{
+	\end{trivlist}
+}
+
+\newenvironment{collaborators}[1][Collaborator(s)]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\bfseries #1:}]
+	}
+	{
+	\end{trivlist}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+%    You need only modify code below this block.
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+%%%%%%%%%%%%%%%
+%
+% Modify the title, author, and due date for each assignment:
+%
+%%%%%%%%%%%%%%%
+\title{MAT499\\Solutions to Munkres}
+\author{\makebox[.9\textwidth]{Hongyuan}}
+%%%%%%%%%%%%%%%
+%
+% Do not modify:
+%
+%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+\newpage
+%%%%%%%%%%%%%%%
+%
+% Your problem statements and solutions start here.
+% Use the \newpage command between problems so that
+% each of your problems begins on its own page.
+%
+%%%%%%%%%%%%%%%
+%Provide the problem statement.
+%
+%
+\newpage
+\begin{problem}{13.4}
+(a) If $\{\mathcal{T}_\alpha \}$ is a family of topologies on $X$, show that $\cap \mathcal{T}_\alpha$ is a topology on $X$. Is $\cup \mathcal{T}_\alpha$ a topology on $X$?
+
+(b) Let $\{\mathcal{T}_\alpha \}$ be a family of topologies on $X$. Show that there is a unique smallest topology on $X$ containing all the collections $\mathcal{T}_\alpha$, and a unique largest topology contained in all $\mathcal{T}_\alpha$.
+
+(c) If $X = \{a, b, c\}$, let $\mathcal{T}_{1} = \{ \emptyset, X, \{a\}, \{a, b\} \}$ and $\mathcal{T}_{2} = \{ \emptyset, X, \{a\}, \{b, c\} \}$. Find the smallest topology containing $\mathcal{T}_{1}$ and $\mathcal{T}_{2}$, and the largest topology contained in $\mathcal{T}_{1}$ and $\mathcal{T}_{2}$.
+\end{problem}
+%
+\begin{proof}
+(a) We show that $\cap \mathcal{T}_\alpha$ satisfies the three conditions for a topology. Since $\emptyset$ and $X$ belongs to any $\mathcal{T}_\alpha$, they are in $\cap \mathcal{T}_\alpha$. In a similar vein, since any union of elements of $\cap \mathcal{T}_\alpha$ is in each $\mathcal{T}_\alpha$, any union is in $\cap \mathcal{T}_\alpha$. In exactly the same vein, any finite intersection of elements of $\cap \mathcal{T}_\alpha$ is in $\cap \mathcal{T}_\alpha$. 
+
+$\cup \mathcal{T}_\alpha$ is not necessarily a topology on $X$. For an example, consider the union of the two topologies on the left side of the second line of Figure 12.1. The union of the first and the second element are not in the union of the two topologies, which violates the second axiom of the definition of a topology.
+
+(b) Consider $\cap \mathcal{T}_\beta$, which is the intersection of all topologies containing $\cup \mathcal{T}_\alpha$. $\cap \mathcal{T}_\beta$ is a topology by Part (a), and it contains $\cup \mathcal{T}_\alpha$ since $\cup \mathcal{T}_\alpha$ is in any $\mathcal{T}_\beta$. It is the smallest since it is the intersection. Because of the way we construct it, it is unique.
+
+The largest topology contained in all $\mathcal{T}_\alpha$ is $\cap \mathcal{T}_\alpha$. By Part (a), $\cap \mathcal{T}_\alpha$ is a topology. Since it's the intersection, it is obviously uniquely largest.
+
+(c) Using the method mentioned in Part (b), The smallest topology containing $\mathcal{T}_{1}$ and $\mathcal{T}_{2}$ is $\{\emptyset, X, \{a\}, \{b\}, \{a, b\}, \{b, c\} \}$ and the largest topology contained in $\mathcal{T}_{1}$ and $\mathcal{T}_{2}$ is $\{\emptyset, X, \{a\} \}$. 
+\end{proof}
+
+\begin{problem}{13.5}
+Show that if $\mathcal{A}$ is a basis for a topology on $X$, then the topology generated by $\mathcal{A}$ equals the intersection of all topologies on $X$ that contain $\mathcal{A}$. Prove the same if $\mathcal{A}$ is a subbasis.
+\end{problem}
+
+\begin{proof}
+A topology containing $\mathcal{A}$ must contain the unions of elements of $\mathcal{A}$, and thus the topology generated by $\mathcal{A}$. Thus the intersection of all topologies on $X$ that contain $\mathcal{A}$, a topology by 13.4 Part (a), must be the topology generated by $\mathcal{A}$. 
+
+Now suppose that $\mathcal{A}$ is a subbasis. A topology containing $\mathcal{A}$ must contain the unions of finite intersections of elements of $\mathcal{A}$, and thus the topology generated by $\mathcal{A}$. Thus the intersection of all topologies on $X$ that contain $\mathcal{A}$, a topology by 13.4 Part (a), must be the topology generated by $\mathcal{A}$. 
+\end{proof}
+
+\begin{problem}{13.6}
+Show that the topologies of $\mathbb{R}_l$ and $\mathbb{R}_k$ are not comparable.
+\end{problem}
+
+\begin{proof}
+Given a basis element $[a, b)$ in the basis of $\mathbb{R}_l$, there is no open interval $(c, d)$ or $(e, f) - K$ that contains $a$ and lies in $[a, b)$. Given a basis element $(-1, 1) - K$ in the basis of $\mathbb{R}_k$ and the point $0$ in this element, there is no interval $[g, h)$ that contains $0$ and lies in this element, since any element in $\mathbb{R}_l$ containing $0$ must contain some $1/n$.
+\end{proof}
+
+\newpage
+\begin{problem}{16.1}
+Show that if $Y$ is a subspace of $X$, and $A$ is a subset of $Y$, then the topology $A$ inherits as a subspace of $Y$ is the same as the topology it inherits as a subspace of $X$.
+\end{problem}
+\begin{proof}
+Let $\mathcal{T}_x$ denote the topology $A$ inherits as a subspace of $X$, $\mathcal{T}_y$ denote the topology $A$ inherits as a subspace of $Y$, $\mathcal{T}_y'$ denote the topology $Y$ inherits as a subspace of $X$ and $\mathcal{T}$ denote the topology on $X$. Notice that $B \in \mathcal{T}_y \leftrightarrow$ there exists $C \in \mathcal{T}_y'$ with $B = C \cap A \leftrightarrow$ there exists $D \in \mathcal{T}$ with $B = (D \cap Y) \cap A = D \cap A\leftrightarrow B \in \mathcal{T}_x$. Thus $\mathcal{T}_x = \mathcal{T}_y$.
+\end{proof}
+
+\begin{problem}{16.4}
+A map $f: X \rightarrow Y$ is said to be an open map if for every open set $U$ of $X$, the set $f(U)$ is open in $Y$. Show that $\pi_1: X \times Y \rightarrow X$ and $\pi_2: X \times Y \rightarrow Y$ are open maps.
+\end{problem}
+\begin{proof}
+Let $A \subset X \times Y$ be an open set. Let $x \in \pi_1(A)$. Thus there exists $y$ with $(x, y) \in A$. Since $A$ is open, by Lemma 13.2, there is a basis element $B \times C$ such that $(x, y) \in B \times C \subset A$. Since $B \times C$ is a basis element, $B$ is open in $X$. Also notice that $x \in B \subset \pi_1(A)$. Thus $\pi_1(A)$ is open.
+\end{proof}
+
+\begin{problem}{16.5}
+Let $X$ and $X'$ denote a single set in the topologies $\mathcal{T}$ and $\mathcal{T'}$, respectively; let $Y$ and $Y'$ denote a single set in the topologies $\mathcal{U}$ and $\mathcal{U'}$, respectively. Assume these sets are nonempty.
+
+(a) Show that if $\mathcal{T'} \subset \mathcal{T}$ and $\mathcal{U'} \subset \mathcal{U}$, then the product topology on $X' \times Y'$ is finer than the product topology on $X \times Y$.
+
+(b) Does the converse of (a) hold? Justify your answer.
+\end{problem}
+\begin{proof}
+(a) Since $\mathcal{T'} \subset \mathcal{T}$ and $\mathcal{U'} \subset \mathcal{U}$, every basis element for $X \times Y$ is also a basis element for $X' \times Y'$.
+
+(b) Yes. Let $A$ be open in $X$ and $B$ be open in $Y$. Then $A \times B$ is open in $X \times Y$. Since the product topology on $X' \times Y'$ is finer than the product topology on $X \times Y$, $A \times B$ is also open in $X' \times Y'$. Let $(x, y) \in A \times B$. By Lemma 13.3, there exists a basis element $C \times D$ such that $(x, y) \in C \times D \subset A \times B$. Thus there are open sets $C \in \mathcal{T'}$ and $D \in \mathcal{U'}$ with $x \in C \subset A$ and $y \in D \subset B$. Since $A$ and $B$ are unions of open sets in $X'$ and $Y'$, respectively, they are also open sets in $X'$ and $Y'$, respectively.
+\end{proof}
+
+\begin{problem}{16.10}
+Let $I = [0, 1]$. Compare the product topology on $I \times I$, the dictionary order topology on $I \times I$, and the topology $I \times I$ inherits as a subspace of $\mathbb{R} \times \mathbb{R}$ in the dictionary order topology.
+\end{problem}
+
+\begin{proof}
+The product topology and the dictionary order topology are not comparable. Consider $[0, 1] \times (0.5, 1]$ open in the product topology but not the other one, since the point $(0, 1)$ is not in the dictionary order topology. Consider $\{0\} \times (0, 1)$ open in the dictionary order topology but not in the product topology, since $\{0\}$ is not open in the standard topology. The topology inherited is strictly finer than the other two. Since the inherited topology contains the points on the edges of $I \times I$, it is clearly strictly finer than the dictionary order topology. Since any element in the product topology can be expressed as a union of the basis element $\{x\} \times ((a,b) \cap [0,1])$ for the topology inherited, the topology inherited is finer than the product topology. Also, the product topology does not contain elements of the form $\{x\} \times ((a,b) \cap [0,1])$, so it's strictly finer.
+\end{proof}
+
+\newpage
+\begin{problem}{17.4}
+Show that if $U$ is open in $X$ and $A$ is closed in $X$, then $U-A$ is open in $X$, and $A-U$ is closed in $X$.
+\end{problem}
+\begin{proof}
+Since $A$ is closed, $X - A$ is open and $U \cap (X - A)$ is open. Notice that $U-A = U \cap (X-A)$ and thus is open. Since $U$ is open, $X-U$ is closed and $A \cap (X-U)$ is closed. Notice that $A-U=A \cap (X-U)$ and is thus closed.
+\end{proof}
+
+\begin{problem}{17.11}
+Show that the product of two Hausdorff spaces is Hausdorff.
+\end{problem}
+\begin{proof}
+Let $(X, \tau_1)$ and $(Y, \tau_2)$ be two Hausdorff spaces. Consider disjoint points $(x, y), (x', y') \in X \times Y$. Because they are disjoint points, we can pick for one or two component ($x, y$ or both) disjoint neighborhoods. As long as there is one component's neighborhoods that are disjoint, the neighborhoods for the two points are disjoint. Thus there exist disjoint neighborhoods for these two points and thus the product of two Hausdorff spaces is Hausdorff.
+\end{proof}
+
+\begin{problem}{17.12}
+Show that a subspace of a Hausdorff space is Hausdorff.
+\end{problem}
+\begin{proof}
+Let $(X, \tau)$ be a Hausdorff space. Let $Y$ be a subspace of $X$. Let $a, b$ be two disjoint points of $Y$. Since $X$ is Hausdorff, we can pick disjoint neighborhoods $U_1, U_2 \in X$ for $a, b$. Notice that $U_1 \cap Y$ and $U_2 \cap Y$ are also disjoint, thus $Y$ is also Hausdorff by definition.
+\end{proof}
+
+\begin{problem}{17.13}
+Show that $X$ is Hausdorff if and only if the diagonal $\delta = \{x \times x | x \in X\}$ is closed in $X \times X$.
+\end{problem}
+\begin{proof}
+Assume $X$ is Hausdorff. Then consider the set $A = X \times X - \delta$ and $(x, y) \in A$. Since $(x, y) \not\in \delta$, $x \neq y$. Thus we can pick two disjoint neighborhoods $U, V \in X$ for $x, y$. Since $U, V$ are open, $U \times V$ is open and a basis element in $X \times X$. Thus $(x, y) \in U \times V \subset A$. Thus $A$ is open in $X \times X$. Thus $\delta$ is closed.
+
+Assume $\delta$ is closed. Then $A$ is open. Consider $x, y \in X$ with $x \neq y$. Then $(x, y) \in A$. Since $A$ is open, there exists a basis element $U \times V$ of $X \times X$ such that $(x, y) \in U \times V \subset A$. Then $U$ and $V$ are also open in $X$ by definition. We also immediately have that $x \in U$ and $y \in V$. Since $U \times V \subset A$, $(z, z) \not\in U \times V$ and thus $U$ and $V$ are disjoint. Thus $X$ is Hausdorff.
+\end{proof}
+
+\newpage
+\begin{problem}{18.5}
+Show that the subspace $(a, b)$ of $\mathbb{R}$ is homeomorphic with $(0, 1)$ and the subspace $[a, b]$ of $\mathbb{R}$ is homeomorphic with $[0, 1]$.
+\end{problem}
+\begin{proof}
+For both cases consider the function $f(x) = (x-a)/(b-a)$. This function is bijective and its inverse function is $g(y) = (b-a)y + a$. Their domains and ranges are as desired. It's clear that both are continuous. By definition of homeomorphism, $f$ is a homeomorphism.
+\end{proof}
+
+\begin{problem}{18.8}
+Let $Y$ be an ordered set in the order topology. Let $f, g: X \rightarrow Y$ be continuous.
+
+(a) Show that the set $\{x | f(x) \leq g(x)\}$ is closed in $X$.
+
+(b) Let $h: X \rightarrow Y$ be the function $h(x) = min\{f(x), g(x)\}$. Show that $h$ is continuous.
+\end{problem}
+
+\begin{proof}
+(a) We show that $A = X - \{x | f(x) \leq g(x)\} = \{x | f(x) > g(x)\}$ is open and therefore show the theorem. Consider $x_0 \in A$. We have $f(x_0) > g(x_0)$. By exercise 10 in Section 17, $Y$ is Hausdorff. Thus we can pick two disjoint neighborhoods $U_1, U_2 \in Y$ for $f(x_0)$ and $g(x_0)$. Since $f, g$ are continuous, $f^{-1}(U_1)$ and $g^{-1}(U_2)$ are open in $X$. Thus $f^{-1}(U_1) \cap g^{-1}(U_2)$ is also open. Notice that $x_0 \in f^{-1}(U_1) \cap g^{-1}(U_2)$. Since $U_1, U_2$ are disjoint, any element $y \in f^{-1}(U_1) \cap g^{-1}(U_2)$ has $f(y) > g(y)$. Thus $f^{-1}(U_1) \cap g^{-1}(U_2) \subset A$. Thus for each element $x \in A$, there exists an open set $V$ with $x \in V \subset A$. Thus $A$ is open.
+
+(b) By Part (a), $A = \{x | f(x) \leq g(x)\}$ is closed in $X$ and similarly $B = \{x | f(x) \geq g(x)\}$ is also closed in $X$. Also notice that $X = A \cup B$. Since $f, g$ are continuous, the functions produced by restricting the domains $f': A \rightarrow Y$ and $g': B \rightarrow Y$ are continuous, by Theorem 18.2. Notice that $f'(x) = g'(x)$ for every $x \in A \cap B$. Notice that $h$ can also defined as $h(x) = f'(x) \forall x \in A$ and $h(x) = g'(x) \forall x \in B$. $h$ is continuous by the Pasting Lemma.
+\end{proof}
+
+\newpage
+\begin{problem}{20.1}
+(a) In $\mathbb{R}^n$, define $d'(\textbf{x}, \textbf{y}) = |x_1-y_1|+\cdots+|x_n-y_n|$. Show that $d'$ is a metric that induces the usual topology of $\mathbb{R}^n$. Sketch the basis elements under $d'$ when $n = 2$.
+
+(b) More generally, given $p\geq 1$, define $d'(\textbf{x}, \textbf{y}) = [\sum^{n}_{i = 1}|x_i - y_i|^p]^{1/p}$ for $\textbf{x}, \textbf{y} \in \mathbb{R}^n$. Assume that $d'$ is a metric. Show that it induces the usual topology on $\mathbb{R}^n$.
+\end{problem}
+\begin{proof}
+(a) We first prove that $d'$ is a metric. The metric, by definition on the textbook, has three properties that we shall prove true for $d'$. 
+
+Property (1): Since $|a| \geq 0 \forall a\in R$, $d'(\textbf{x}, \textbf{y}) \geq 0 \forall \textbf{x}, \textbf{y} \in \mathbb{R}^n$. If $\textbf{x} = \textbf{y} \Rightarrow d'(\textbf{x}, \textbf{y}) = 0$: if $\textbf{x} = \textbf{y}$, $x_i = y_i$ for all $i \in \{1, \cdots, n\}$ and thus $|x_i - y_i| = 0$ for all $i$ and thus $d'(\textbf{x}, \textbf{y}) = 0$. If $d'(\textbf{x}, \textbf{y}) = 0 \Rightarrow \textbf{x} = \textbf{y}$: if $d'(\textbf{x}, \textbf{y}) = 0$ then $|x_i - y_i| = 0$ for all $i$ and thus $x_i = y_i$ for all $i$ and thus $\textbf{x} = \textbf{y}$. 
+
+Property (2): Suppose for contradiction that $\exists \textbf{x}, \textbf{y} \in \mathbb{R}^n$ with $d'(\textbf{x}, \textbf{y}) \neq d'(\textbf{y}, \textbf{x})$. Then $|x_1 - y_1| + \cdots + |x_n - y_n| \neq |y_1 - x_1| + \cdots + |y_n - x_n|$, but by definition of absolute value, $|x_i - y_i| = |y_i - x_i|$ for all $i$. Thus we get $|x_1 - y_1| + \cdots + |x_n - y_n| = |y_1 - x_1| + \cdots + |y_n - x_n|$ and arrive at a contradiction. 
+
+Property (3): Notice that for all $\textbf{x}, \textbf{y}, \textbf{z} \in \mathbb{R}^n$, $|x_i - z_i| = |x_i - y_i + y_i - z_i| \leq |x_i - y_i| + |y_i - z_i|$ for all $i$. Thus $d'(\textbf{x}, \textbf{z}) = \sum_{i = 1}^{n}|x_i - z_i| \leq \sum_{i = 1}^{n} |x_i - y_i| + |y_i - z_i| = \sum_{i = 1}^{n}|x_i - y_i| + \sum_{i = 1}^{n}|y_i - z_i| = d'(\textbf{x}, \textbf{y}) + d'(\textbf{y}, \textbf{z})$. 
+
+Now we show that the topology induced by $d'$ is the same as the topology induced by the square metric. Let $\textbf{x}, \textbf{y} \in \mathbb{R}^n$. We claim that $d(\textbf{x}, \textbf{y})$ (square metric) $\leq d'(\textbf{x}, \textbf{y})$. This is obvious since $d(\textbf{x}, \textbf{y}) = max\{|x_i - y_i|\}$ and $d'(\textbf{x}, \textbf{y}) = \sum_{i = 1}^n |x_i-y_i|$. Next we claim that $d'(\textbf{x}, \textbf{y}) \leq nd(\textbf{x}, \textbf{y})$. This is also obvious since $|x_i - y_i| \leq d(\textbf{x}, \textbf{y})$. 
+
+Let $\epsilon > 0$ and $\textbf{x} \in \mathbb{R}^n$. Notice that $B_d(\textbf{x}, \epsilon/n) \subset B_{d'}(\textbf{x}, \epsilon)$, since if $d(\textbf{x}, \textbf{y}) < \epsilon/n$, then $d'(\textbf{x}, \textbf{y}) \leq nd(\textbf{x}, \textbf{y}) < \epsilon$. By Lemma 13.3/20.2, the topology induced by the square metric is finer than the topology induced by $d'$.
+
+Let $\epsilon > 0$ and $\textbf{x} \in \mathbb{R}^n$. Notice that $B_{d'}(\textbf{x}, \epsilon) \subset B_{d}(\textbf{x}, \epsilon)$, since if $d'(\textbf{x}, \textbf{y}) < \epsilon$, then $d(\textbf{x}, \textbf{y}) \leq d'(\textbf{x}, \textbf{y}) < \epsilon$. By Lemma 13.3/20.2, the topology induced by $d'$ is finer than the topology induced by the square metric. Thus $d'$ is a metric that induces the usual topology of $\mathbb{R}^n$.
+
+(b) Let $\textbf{x}, \textbf{y} \in \mathbb{R}^n$. We claim that $d(\textbf{x}, \textbf{y}) \leq d'(\textbf{x}, \textbf{y}) \leq n^{1/p}d(\textbf{x}, \textbf{y})$. $d(\textbf{x}, \textbf{y}) \leq d'(\textbf{x}, \textbf{y})$ since $d(\textbf{x}, \textbf{y}) = max\{|x_i - y_i|\}$ and $d'$ measures a sum of $|x_i - y_i|$ and thus in general $d < d'$. When $n = 1$, $d(\textbf{x}, \textbf{y}) = d'(\textbf{x}, \textbf{y})$. Notice that $d'(\textbf{x}, \textbf{y})$ is max when every $|x_i - y_i|$ is the same and $d'_{max}(\textbf{x}, \textbf{y}) = n^{1/p}d(\textbf{x}, \textbf{y})$. Otherwise we have $d'(\textbf{x}, \textbf{y}) < n^{1/p}d(\textbf{x}, \textbf{y})$. Thus we have $d'(\textbf{x}, \textbf{y}) \leq n^{1/p}d(\textbf{x}, \textbf{y})$. 
+
+The rest of the proof proceeds exactly the same as in Part (a).
+\end{proof}
+
+\begin{problem}{20.2}
+Show that $\mathbb{R} \times \mathbb{R}$ in the dictionary order topology is metrizable.
+\end{problem}
+
+\begin{proof}
+By Problem 9 in Section 16, the dictionary order topology on $\mathbb{R} \times \mathbb{R}$ is the same as the product topology $\mathbb{R}_d \times \mathbb{R}$. By Example 1 in Section 20, $\mathbb{R}_d$ is metrizable. We know that by Example 2 in Section 20 that $\mathbb{R}$ is also metrizable, since for $\mathbb{R}$ the order topology is the same as the standard topology. We know by Exercise 3 in Section 21 that two metric spaces is also metrizable. Thus $\mathbb{R}_d \times \mathbb{R}$ and $\mathbb{R} \times \mathbb{R}$ in the dictionary order topology is metrizable.
+\end{proof}
+
+\newpage
+\begin{problem}{20.3}
+Let $X$ be a metric space with metric $d$. 
+
+(a) Show that $d: X \times X \rightarrow \mathbb{R}$ is continuous.
+
+(b) Let $X'$ denote a space having the same underlying set as $X$. Show that if $d: X' \times X' \rightarrow \mathbb{R}$ is continuous, then the topology of $X'$ is finer than the topology of $X$.
+\end{problem}
+
+\begin{proof}
+For Part (a), I use the notation $x \times y$ in order to differentiate from an interval $(x, y)$.
+(a) Let $(a, b) \subset \mathbb{R}$ and $x \times y \in d^{-1}(a, b)$, i.e. $a<d(x \times y)<b$. We now pick $\epsilon$ such that $(d(x \times y)-2\epsilon, d(x \times y)+2\epsilon)\subset(a, b)$. Consider $(x-\epsilon, x+\epsilon) \times (y-\epsilon, y+\epsilon)$. For every $x' \times y' \in (x-\epsilon, x+\epsilon) \times (y-\epsilon, y+\epsilon)$, $d(x' \times y') \leq d(x' \times x)+d(x \times y)+d(y \times y')<d(x \times y)+2\epsilon$ and $d(x \times y) \leq d(x \times x')+d(x' \times y')+d(y'\times y)<d(x'\times y')+2\epsilon$, by the triangle inequality of a metric. Thus we have $a<d(x \times y)-2\epsilon<d(x' \times y')<d(x \times y)+2\epsilon<b$. Thus $x' \times y' \in d^{-1}(a, b)$ and $(x-\epsilon, x+\epsilon)\times (y-\epsilon, y+\epsilon)\subset d^{-1}(a, b)$. Thus $d^{-1}(a, b)$ is open. By the definition of continuity, $d$ is continuous.
+
+(b) Since $d$ is continuous, by Exercise 11 of Section 18, for every $x \in X'$, $d_x(y):X'\rightarrow \mathbb{R} , d_x(y)=d(x,y)$, is continuous. Thus every ball $B_d(x,r)=  \{y|d_x(y)<r\}= d^{-1}_x((-\infty,r))$ must be open in $X'$. Since $X$'s basis elements are open in $X'$, the topology of $X'$ is finer than the topology of $X$.
+\end{proof}
+
+\begin{problem}{20.11}
+Show that if $d$ is a metric for $X$, then $d'(x, y) = d(x, y)/(1+d(x, y))$ is a bounded metric that gives the topology of $X$.
+\end{problem}
+\end{document}
+
+
+

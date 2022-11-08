@@ -1,0 +1,97 @@
+\documentclass[12pt]{article}
+\usepackage{latexsym, amssymb, amsmath, amsfonts, amscd, amsthm}
+\usepackage{enumerate}
+\usepackage[margin=1in]{geometry}
+\usepackage{calrsfs}
+\DeclareMathAlphabet{\pazocal}{OMS}{zplm}{m}{n}
+\newcommand{\La}{\mathcal{L}}
+\newcommand{\Lb}{\pazocal{L}}
+\linespread{1} %Change the line spacing only if instructed to do so.
+\newenvironment{problem}[2][Problem]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\bfseries #1 #2:}]
+	}
+{
+	\end{trivlist}
+	}
+
+\newenvironment{solution}[1][Solution]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\itshape #1:}]
+	}
+	{
+	\end{trivlist}
+}
+
+\newenvironment{collaborators}[1][Collaborator(s)]
+{
+	\begin{trivlist} 
+		\item[\hskip \labelsep {\bfseries #1:}]
+	}
+	{
+	\end{trivlist}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+%    You need only modify code below this block.
+%
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%
+%%%%%%%%%%%%%%%
+%
+% Modify the title, author, and due date for each assignment:
+%
+%%%%%%%%%%%%%%%
+\title{Munkres Chapter 2.18 exercises}
+\author{Cherie Li}
+\date{06/07/2018}
+
+%%%%%%%%%%%%%%%
+%
+% Do not modify:
+%
+%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+\newpage
+%%%%%%%%%%%%%%%
+%
+% Your problem statements and solutions start here.
+% Use the \newpage command between problems so that
+% each of your problems begins on its own page.
+%
+%%%%%%%%%%%%%%%
+%Provide the problem statement.
+%
+\begin{problem}[Exercise]{2.18.5}
+	Show that the subspace $(a, b)$ of $\mathbb{R}$ is homeomorphic with $(0,1)$ and the subspace $[a,b]$ of $\mathbb{R}$ is homeomorphic with $[0,1]$. 
+\end{problem}
+\begin{solution}
+	Let $(a,b)$ be a subspace of $\mathbb{R}$. Consider the function $f(x) = \frac{x-a}{b-a}$, where $x \in (a,b)$. Notice that $0 < f(x) < 1$ and that it is bijective. Since $b > a$, $b-a > 0$, so the function is continuous, since it is just a linear function $x -a$ over some nonzero constant. Also, we have that the inverse is also continuous: $f(y) = y(b-a) + a$, as this is just the equation of a line with slope $(b-a)$ and intercept $a$ as well as bijective. \\
+	Now consider the same function for $0 \leq f(x) \leq 1$. Notice when $x = a$, the function evaluates to $0$ which is in the interval $[0, 1]$. Also when $x = b$, we have that the function evaluates to 1. Also the function is continuous and bijective still. \\
+	Since function and its inverse are both continuous, then $f$ is a homeomorphism and $(0,1)$ homeomorphic to $(a,b)$ and $[0,1]$ homeomorphic to $[a,b]$. 
+\end{solution}
+\begin{problem}[Exercise]{2.18.10}
+	Let $Y$ be an ordered set in the order topology. Let $f, g: X \rightarrow Y$ be continuous. 
+	\begin{enumerate}[(a)]
+		\item Show that the set $\lbrace{x | f(x) \leq g(x)\rbrace}$ is closed in $X$. 
+		\item Let $h: X \rightarrow Y$ be the function $h(x) = min\lbrace{f(x), g(x)\rbrace}$. Show that $h$ is continuous. [$Hint$: Use the pasting lemma.]
+	\end{enumerate}
+\end{problem}
+\begin{solution} \hfill
+	\begin{enumerate}[(a)]
+	\item Let $Y$ be an ordered set in the order topology and let $f, g: X \rightarrow Y$ be continuous. To show that the set $A:= \lbrace{x | f(x) \leq g(x)\rbrace}$ is closed it suffices to show that $A^c :=  \lbrace{x | f(x) > g(x)\rbrace}$ is open in $X$. Assume $A^c$ is nonempty and let $a \in A^c$ be arbitrary. Let $y_1, y_2, y_3 \in Y$ such that $y_1 \leq g(a) < y_2 < f(a) \leq y_3$. Notice that $(y_1, y_2)$ and $(y_2, y_3)$ open in $Y$, since if $f(a)$ is the maximal element or $g(a)$ is the minimal element, we have $\left[g(a), y_2\right), \left(y_2, f(a)\right]$ instead. These are open intervals in order topology, so their intersection $(y_1, y_2) \cap (y_2, y_1)$ is also open. Since $f$ is continuous, by definition we have that $f^{-1}\big((y_1, y_2) \cap (y_2, y_1)\big)$ is also open in $X$ where $a \in f^{-1}\big((y_1, y_2) \cap (y_2, y_1)\big) \subset A^c$. So $A^c$ is open in $X$ and $A$ is closed.  
+	\item Notice from the previous part that the set  $A:= \lbrace{x | f(x) \leq g(x)\rbrace}$ and symmetrically $B:= \lbrace{x | g(x) \leq f(x)\rbrace}$ are both closed in $X$. Also, notice that $X = A \cup B$ since all $x$ must have $g(x) > f(x)$, $g(x) = f(x)$ or $g(x) < f(x)$ and that their intersection is when $g(x) = f(x)$. By Theorem 18.3 (the pasting lemma), $f$ and $g$ give the continuous function $h: X \rightarrow Y$, where $h(x) = f(x)$ if $x \in A$. So if $x \in A$, then $f(x) < g(x)$. Similarly, if $x \in B$, then $g(x) > f(x)$. This is the same as the function min, defined in the statement. 
+	\end{enumerate}
+\end{solution}
+\end{document}
