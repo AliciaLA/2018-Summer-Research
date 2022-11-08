@@ -1,0 +1,1075 @@
+\documentclass[12pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{fourier} 
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{booktabs}
+\usepackage{latexsym, amssymb, amsmath, amsfonts, amscd, amsthm, breqn}
+\usepackage{enumerate, hyperref, multicol, tikz, float, hyperref}
+\usepackage{graphicx}
+\graphicspath{{./pictures/}}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\newtheorem{exercise}{Exercise}
+\newtheorem{question}{Question}
+\newtheorem*{notation*}{Notation}
+
+\newtheorem{fact}{Fact}
+\newtheorem{lemma}{Lemma}
+\newtheorem*{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\FF}{\mathbb{F}}
+\renewcommand\theadalign{bc}
+\renewcommand\theadfont{\bfseries}
+\renewcommand\theadgape{\Gape[4pt]}
+\renewcommand\cellgape{\Gape[4pt]}
+
+\title{Artworks and Articles Meet Mapper and Persistent Homology}
+
+\date{07/31/18}
+
+\author{Hongyuan Zhang, Alicia Ledesma Alonso, Cherie Li, Chris Won\thanks{Research supported by NSF award number HRD-1619654. Any opinions, findings, and conclusions or recommendation expressed in this material are those of the authors and do not necessarily reflect the views of the National Science Foundation.}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	Since its recent birth, topological data analysis has proven to be a very useful tool when studying large and complex data sets. In this paper, we explore persistent homology tools and Mapper to explore two main data sets from the following sources: Metropolitan Museum of Art (MET) and arXiv. After learning the preliminary theory of topology, the two data sets were studied independently. For the MET project, we use Mapper to guide feature selection. We then use persistent homology to help differentiate between two subsets of artworks. For the arXiv project, we use persistent homology to derive a general sense of the shape of the data. We next use Mapper to further explore this idea by analyzing trends and certain features in the Mapper visualizations. By using these tools, detailed insights are given in understanding the complexity of each data set. 
+\end{abstract}
+
+\section{Introduction}
+In the past decade, topological data analysis (TDA) has been a tool of key interest to researchers who want to analyze and visualize large and complex data sets. Specifically, TDA allows us to explore the ``shape'' of our data, through which we can filter out noise and reveal its real structure. There are two primary tools of TDA: persistent homology and the Mapper algorithm. The concept of persistent homology was first introduced by Edelsbrunner\cite{Edelsbrunner2002}, followed by Carlsson and Zomorodian\cite{Zomorodian2005}. More recently, Singh, M\'emoli and Carlsson introduced the Mapper algorithm in 2007 \cite{originalmapper}.
+\newline
+\par TDA has three key facets: coordinate freeness, deformation invariance, and compressed representations\cite{lum2013extractinginsights}. By \textit{coordinate freeness}, we mean that TDA allows us to compare data from different coordinate systems. Rather than having the embedded coordinate system, we are more interested in the distance between data points (see Section 2.1). By \textit{deformation invariance}, we mean that in topology, we study invariant shapes under non-extreme deformation  (no cutting or gluing). A classic example of this invariance is that topologists treat a coffee cup and a donut as the same thing because you can transform one to another without cutting or gluing. The key topological feature that they share is a hole (the handle of the coffee cup and the hole in the center of the donut), and it is preserved. This idea allows differentiation between real structure and noise. By \textit{compressed representations}, we mean reduced, finite representations of infinite shapes or a large amount of points. Ideally, compressed representations retain topological invariants of the original representations. 
+\newline
+\par The Mapper algorithm\cite{originalmapper} and persistent homology\cite{Edelsbrunner2002}\cite{Zomorodian2005} have been applied to data analysis in several fields, including biology\cite{Nicolau7265}\cite{yao_sun_huang_bowman_singh_lesnick_guibas_pande_carlsson_2009}\cite{li_cheng_glicksberg_gottesman_tamler_chen_bottinger_dudley_2015}\cite{rizvi_camara_kandror_roberts_schieren_maniatis_rabadan_2017}\cite{nielson_paquette_2015}\cite{cámara_levine_rabadán_2016}\cite{kyeong_kim_kim_2017}\cite{rucco2014embolism}\cite{bendich_marron_miller_pieloch_skwerer_2016}, network analysis\cite{2013PLoSO...866506P}\cite{weights}\cite{Machacon_Herchel_Thaddeus2016}, manufacturing\cite{guo2017manu}, and natural language processing\cite{zhu2013language}. In this paper we apply these tools to a data set describing artworks in the Metropolitan Museum of Art\cite{metdata} and a data set derived from research papers in the open preprint archive found at arXiv.org\cite{arXivAPI}.
+
+\section{Preliminaries}
+\subsection{Basic Topology}
+
+The Mapper algorithm and persistent homology's foundation in topological theory allows us to interpret our data with freedom. For example, our data does not have to come from the Euclidean space. Instead, we have a broader assumption that our data comes from a metric space, a type of topological space. We rely on the following definitions from Munkres\cite{munkres2000topology}, Kurlin\cite{Kurlin2015PointCloud} and Hatcher\cite{hatcher2002algebraictopology}.
+
+\begin{definition}[Topology]
+A topology on a set $X$ is a collection $\mathcal{T}$ of subsets of $X$ having the following properties:
+
+(1) $\emptyset$ and $X$ are in $\mathcal{T}$.
+
+(2) The union of the elements of any subcollection of $\mathcal{T}$ is in $\mathcal{T}$.
+
+(3) The intersection of the elements of any finite subcollection of $\mathcal{T}$ is in $\mathcal{T}$.
+
+A set $X$ for which a topology $\mathcal{T}$ has been specified is called a topological space. 
+
+If $X$ is a \textbf{topological space} with topology $\mathcal{T}$, we say that a subset $U$ of $X$ is an open set of $X$ if $U$ belongs to the collection $\mathcal{T}$.
+\end{definition}
+In the Mapper algorithm, data points are often projected onto the real number line $\RR$ with the standard topology.
+\begin{definition}[Basis]
+If $X$ is a set, a basis for a topology on $X$ is a collection $\mathcal{B}$ of subsets of $X$ (called basis elements) such that
+
+(1) For each $x \in X$, there is at least one basis element $B$ containing $x$.
+
+(2) If $x$ belongs to the intersection of two basis elements $B_1$ and $B_2$, then there is a basis element $B_3$ containing $x$ such that $B_3 \subset B_1 \cap B_2$.
+\end{definition}
+
+\begin{definition}[$\mathcal{T}$ generated by $\mathcal{B}$]
+If $\mathcal{B}$ satisfies these two conditions, then we define the topology $\mathcal{T}$ generated by $\mathcal{B}$ as follows: A subset $U$ if $X$ is said to be open in $X$ if for each $x \in U$, there is a basis element $B \in \mathcal{B}$ such that $x \in B$ and $B \subset U$. Note that each basis element is itself an element of $\mathcal{T}$. 
+\end{definition}
+
+\begin{definition}[Standard Topology on $\mathbb{R}$]
+If $\mathcal{B}$ is the collection of all open intervals in the real line, $(a, b) = \{x | a < x < b\}$, the topology generated by $\mathcal{B}$ is called the standard topology on the real line. Whenever we consider $\mathbb{R}$, we shall suppose it is given this topology unless we specifically state otherwise.
+\end{definition}
+
+Furthermore, we can project the data onto $\mathbb{R}^2$. $\mathbb{R}^2$ is the equivalent to $\mathbb{R} \times \mathbb{R}$. Assuming we have standard topology on each $\mathbb{R}$, the topology on $\mathbb{R}^2$ is the product topology.
+
+\begin{definition}[Product Topology]
+Let $X$ and $Y$ be topological spaces. The product topology on $X \times Y$ is the topology having as basis the collection $\mathcal{B}$ of all sets of the form $U \times V$, where $U$ is an open subset of $X$ and $V$ is an open subset of $Y$.
+\end{definition}
+Our applications of tools from TDA rely on a pairwise distance function that describes distances between data points, or, a "metric".
+\begin{definition}[Metric]
+A metric on a set $X$ is a function $d: X \times X \rightarrow R$ having the following properties:
+
+(1) $d(x, y) \geq 0$ for all $x, y \in X$; equality holds if and only if $x=y$.
+
+(2) $d(x, y) = d(y, x)$ for all $x, y \in X$.
+
+(3) (Triangle inequality) $d(x, y) + d(y, z) \geq d(x, z)$, for all $x, y, z \in X$.
+
+Given a metric $d$ on $X$, the number $d(x, y)$ is often called the distance between $x$ and $y$ in the metric $d$.
+\end{definition}
+A set with a metric is a topological space, automatically, with a basis made up of open balls, or "$\epsilon$-balls" \cite{munkres2000topology}.
+\begin{definition}[$\epsilon$-ball]
+Given $\epsilon > 0$, consider the set $B_d(x, \epsilon) = \{y | d(x, y) < \epsilon \}$ of all points $y$ whose distance from $x$ is less than $\epsilon$. It is called the $\epsilon$-ball centered at $x$.
+\end{definition}
+
+\begin{definition}[Metric Topology]
+If $d$ is a metric on the set $X$, then the collection of all $\epsilon$-balls $B_d(x, \epsilon)$, for $x \in X$ and $\epsilon > 0$, is a basis for a topology on $X$, called the metric topology induced by $d$.
+\end{definition}
+
+\begin{definition}[Metric Space]
+If $X$ is a topological space, $X$ is said to be metrizable if there exists a metric $d$ on the set $X$ that induces the topology of $X$. A metric space is a metrizable space $X$ together with a specific metric $d$ that gives the topology of $X$.
+\end{definition}
+The Mapper algorithm and computation of persistent homology begins with data points from a point cloud.
+\begin{definition}[Point Cloud]
+A point cloud is a finite metric space.
+\end{definition}
+Finally, we introduce one kind topological equivalence. The concept of equivalence is crucial in TDA, since our goal is to reveal the original data's structure via simplicial complexes, a compressed representation of the data. Using this notion of equivalence, we could say a coffee cup and a donut are equivalent. Certain simplicial complexes are considered equivalent to the original data by the following definition.
+\begin{definition}
+A map $f : X \rightarrow Y$ is called a homotopy equivalence if there is a continuous map $g : Y \rightarrow X$ such that $f \circ g$ and $g \circ f$ both give the identity map. The spaces X and Y are said to be homotopy equivalent or to have the same homotopy type. 
+\end{definition}
+
+\subsection{Simplicial Complexes and Homology}
+
+Simplicial complexes can be used as compressed representations of the structures of point clouds. The building blocks of simplicial complexes are simplices. We rely on the following definitions from Edelsbrunner \cite{edelsbrunner2010computational}. 
+
+\begin{definition}[k-simplex]
+Let $u_1, u_2, \cdots, u_{k+1}$ be $k+1$ linearly independent points in $\RR^n$. Then the set $\{\sum^{k}_{i=0}\lambda_{i}u_i|\sum^k_{i=0}\lambda_i=1, \lambda_i\geq 0 \}$ is a k-simplex. 
+\end{definition}
+We call 0-simplex a vertex, 1-simplex, edge, 2-simplex , triangle, and 3-simplex, tetrahedron (Figure \ref{simplex}). We can connect simplexes to form simplicial complexes along their faces.  
+\begin{figure}[h]
+\centering
+\includegraphics[height=1cm,width=5cm]{simplex.PNG}
+\caption{Examples of 0, 1, 2, 3 simplex\cite{zhu2013language}}
+\label{simplex}
+\end{figure}
+\begin{definition}[face]
+A face $\tau$ of a simplex $\sigma$ is a simplex spanned by a non-empty subset of $\{u_i\}$. We write $\tau \leq \sigma$ if $\tau$ is a face.
+\end{definition}
+\begin{definition}[simplicial complex]
+A simplicial complex is a finite collection of simplices $K$ such that $\sigma \in K$ and $\tau \leq \sigma$ implies $\tau \in K$, and $\sigma$,$\sigma_0 \in K$ implies $\sigma \cap \sigma_0$ is either empty or a face of both.
+\end{definition}
+A simplicial complex can also be defined in a broader sense. That is, non-geometrically. 
+\begin{definition}[abstract simplicial complex]
+An abstract simplicial complex is a finite collection of sets $A$
+such that $\alpha \in A$ and $\beta \subset \alpha$ implies $\beta \in A$.
+\end{definition}
+We can build a geometric simplicial complex $K$ from an abstract simplicial complex $A$ and vice versa. We call $K$ a geometric realization of $A$, and $A$ a vertex scheme of $K$.
+
+We give a special name to a sum of $n$-simplicies.
+\begin{definition}[p-chain]
+Let $K$ be a simplicial complex and $p$ a dimension. A
+$p$-chain is a formal sum of $p$-simplices in $K$, denoted as $c=\sum a_i \sigma_i$ where the $\sigma_i$ are the $p$-simplices and the $a_i$ are the coefficients. 
+\par In computational topology, we mostly work with coefficients $a_i$ that are either 0 or 1, called modulo 2 coefficients.
+\end{definition}
+\begin{definition}[group of p-chains]
+The $p$-chains together with the addition operation form the group of $p$-chains denoted as $C_p = C_p(K)$.
+\end{definition}
+For each dimension $p$, there is a $p$-chain group. To relate these $p$-chain groups, we have the boundary map.
+\begin{definition}[boundary map]
+The boundary of a $p$-simplex is the sum of its $(p-1)$-dimensional faces. The boundary of a $p$-chain is the sum of the boundaries of its simplices. Hence, taking the boundary maps a $p$-chain to a $(p-1)$-chain, and we write $\delta_p : C_p \rightarrow C_{p-1}$.$\delta_p$ is a homomorphism.
+\end{definition}
+Thus, for a simplicial complex, its chain groups can be connected by boundary maps:
+
+$\cdots \overset{\delta_{p+2}}{\longrightarrow}C_{p+1}\overset{\delta_{p+1}}{\longrightarrow}C_p\overset{\delta_p}{\longrightarrow}C_{p-1}\overset{\delta_{p-1}}{\longrightarrow}\cdots$. We are interested in examining the topological features of a simplicial complex. In order to identify topological features, we focus on a subgroup of $p$-chains.
+\begin{definition}[p-cycle]
+A $p$-cycle is a $p$-chain with empty boundary, $\delta c=0$. The group of $p$-cycles is denoted as $Z_p = Z_p(K)$, which is a subgroup of $C_p$.
+\end{definition}
+Notice that the group of $p$-cycles is the kernel of the $p$-th boundary map, $Z_p = ker\delta_p$. To identify each different feature, we focus on the $p$-cycles that do not represent the same feature.
+\begin{definition}[p-boundary]
+A $p$-boundary is a $p$-chain that is the boundary of a $(p + 1)$-chain, $c = \delta d$ with $d \in C_{p+1}$. The group of $p$-boundaries is denoted by $B_p = B_p(K)$, which is again a subgroup of $C_p$.
+\end{definition}
+Notice that the group of $p$-boundaries is the image of the $(p+1)$-st boundary map, $B_p = im\delta_{p+1}$.We formalize the idea of "a boundary of a boundary is empty" in the following theorem.
+\begin{theorem}[Fundamental Lemma of Homology]
+$\delta_p\delta_{p+1}d=0$ for every integer $p$
+and every $(p+1)$-chain $d$.
+\end{theorem}
+Thus every $p$-boundary is also a $p$-cycle and $B_p \leq Z_p \leq C_p$. We now define the homology group and identify different topological features from it.
+\begin{definition}[homology group and betti number]
+The $p$-th homology group,$H_p$, is the quotient group $Z_p/B_p$. The $p$-th Betti number is the rank of this group, $\beta_p = rank(H_p)$.
+\end{definition}
+
+Elements of $H_p$ are called homology classes. Two cycles representing the same homology class are said
+to be homologous. This means their difference is a boundary.\cite{hatcher2002algebraictopology} If the different between two cycles is a boundary, they contain the same topological feature. For example, in Figure \ref{boundary}, c2 and c3 contain the same hole but their difference is c1, boundary of the yellow triangle.
+
+\begin{figure}[h]
+\centering
+\includegraphics[height=2cm,width=7cm]{boundary.PNG}
+\caption{Example of homologous cycles (c2 and c3) \cite{zhu2013language}}
+\label{boundary}
+\end{figure}
+
+$\beta_p$ is the number of topological features in the $p$th dimension. Intuitively, $\beta_0$ indicates the number of connected components, $\beta_1$ indicates the number of loops, $\beta_2$ the number of voids, and $\beta_n$ for $n$-dimensional analogues\cite{zhu2013language}. 
+
+\section{Topological Data Analysis}
+
+With the basic topological concepts in hand, we now introduce the pipelines of persistent homology and the Mapper algorithm.
+
+\subsection{Persistent Homology}
+
+In persistent homology, we compute betti numbers for a sequence of evolving simplicial complexes built from a point cloud, where the data points serve as vertices. How do we build a simplicial complex from a point cloud? There are multiple ways to do so; for the purpose of this paper, we introduce two such ways.
+\begin{definition}[Vietoris-Rips (Rips) complex]
+Given a collection of points $\{x_\alpha\}$ in Euclidean space$\mathbb{E}^n$, the Rips complex, $\mathcal{R}_\epsilon$ is the abstract simplicial complex whose $k$-simplices correspond to unordered $(k + 1)$-tuples of points $\{x_\alpha\}_0^k$ which are pairwise within distance $\epsilon$.\cite{ghrist2007barcodes}
+\end{definition}
+\begin{definition}[\u Cech complex]
+Given a collection of points $\{x_\alpha\}$ in Euclidean space $\mathbb{E}^n$, the \u Cech complex, $\mathcal{C}_\epsilon$, is the abstract simplicial complex whose $k$-simplices are determined by unordered $(k + 1)$-tuples of points $\{x_\alpha\}_0^k$ whose closed $\epsilon/2$-ball neighborhoods have a point of common intersection.\cite{ghrist2007barcodes}
+\end{definition}
+The following theorem guarantees that we can recover the topology of the input point cloud from the \u Cech complex, since the \u Cech complex is a nerve.
+\begin{definition}[Nerve]
+For finite collection of sets, F, the nerve consist of all non-empty subcollections whose sets have a non-empty common intersection, Nr$F=\{X\subseteq F | \cap X \neq \emptyset\}$.\cite{edelsbrunner2010computational}
+\end{definition}
+\begin{theorem}[The Nerve Theorem]
+Let F be a finite collection of closed, convex sets in Euclidean space. Then the nerve of F and the union of the sets in F have the same homotopy type.\cite{edelsbrunner2010computational}
+\end{theorem}
+
+According to the Nerve Theorem, $\mathcal{C}_\epsilon$ is homotopically equivalent to the union of $\epsilon/2$-balls about the point set $\{x_\alpha\}$, whereas $\mathcal{R}_\epsilon$ is not. However, the Rips complex is computationally less expensive than the corresponding \u Cech complex, and in the context of persistent homology, the Rips complex is an acceptable approximation to \u Cech complex\cite{ghrist2007barcodes}. Thus, when applying persistent homology to our data sets, we build Rips complexes. 
+\newline
+\par After we choose an $\epsilon$ and build a simplicial complex from the point cloud, we can compute betti numbers for this complex. However, the betti numbers only represent the structure of the underlying point cloud at a particular $\epsilon$ value; under which $\epsilon$ is the resulting complex "best" to represent the structure? In fact, in persistent homology, we compute betti numbers for a sequence of evolving simplicial complexes with increasing $\epsilon$ to see the "evolution" better. This sequence is called a filtration.
+\begin{definition}[filtration]
+An increasing sequence of $\epsilon$ produces a filtration, i.e., a sequence of increasing simplicial complexes $VR(\epsilon_1)\subset VR(\epsilon_2) \cdots$, with the property that a simplex enters the sequence no earlier than all its faces.\cite{zhu2013language}
+\end{definition}
+In persistent homology, we track the birth and death (becoming filled-in) of homology generators along the filtration. A generator of the 0th homology group represents a connected component, that of the 1st homology group represents a loop, etc. We are interested in the "persistent" generators, by which we mean the ones that persist through a long range of $\epsilon$ values. Persistent ones are likely to be the real structure of data and short-lived ones are likely to be noise in data. We can use barcode graphs\cite{ghrist2007barcodes} to display this information. Persistence diagrams\cite{Edelsbrunner2002persistentdiagram} can also help visualize this same information. In our paper, we mainly use barcode graphs; see the following example for a sample barcode graph and its interpretation. In a barcode graph, $x$-axis is $\epsilon$, each bar represents a homology generator and the interval of the bar indicates the range of $\epsilon$ in which it exists. Generally, in a $p$-dimension barcode graph, the number of bars at a particular $\epsilon$ corresponds to $\beta_p$ at this $\epsilon$, since betti numbers are defined as ranks of homology groups and the barcodes track homology generators.
+
+\subsubsection{Examples}
+
+We use javaPlex 4.3.4\cite{Javaplex} and Dionysus 2 \cite{Dionysus} to generate the barcode graphs in this paper. Consider the example of five unit squares in $\mathbb{R}^2$ (Figure \ref{five_squares_paint}, Figure \ref{squaresbarcodes}). We illustrate the approximate filtration of Rips-complexes through increasing epsilon. We start out with 20 separate bars in the 0th dimension when $\epsilon = 0$ since there are 20 vertices, each considered as a separate connected component. There are no loops yet, so there there are no bars in Dimension 1 at this point. At $\epsilon = 1$ (Figure \ref{eps1}),  five squares form, so there are 5 connected components, and 15 bars die in Dimension 0. In the first dimension, 5 bars appear, corresponding to loops formed by each square. At $\epsilon = \sqrt{2}$ (Figure \ref{eps2}), these five bars end since the five squares are filled in when their diagonals are connected. Since there are still five connected components, there is no change in Dimension 0. As $\epsilon$ increases, edges form between squares, the number of connected components decreases (Figure \ref{eps3}), and at some point, the five squares form a loop (Figure \ref{eps4}). Thus in Dimension 1, one bar appears. As $\epsilon$ further increases, this loop also gets filled in and the bar in Dimension 1 dies. Thus, finally there is no bar in Dimension 1 and one bar in Dimension 0. 
+%%%
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/epsilon1.png} 
+  \caption{}
+  \label{eps1} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering  \includegraphics[height=3cm, width=5cm]{pictures_met/epsilon2.png} 
+  \caption{}
+  \label{eps2}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/epsilon3.png} 
+  \caption{}
+  \label{eps3} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/epsilon4.png} 
+  \caption{}
+  \label{eps4}
+\end{subfigure}
+\caption{Filtration example}
+\label{five_squares_paint}
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[height=4cm,width=7cm]{5_squares.png}
+\caption{Barcode graphs for 5 squares}
+\label{squaresbarcodes}
+\end{figure}
+As a second example, we generate Rips-complex barcode graphs for 50 randomly sampled points from a sphere of radius 1. We use javaPlex\cite{Javaplex} to compute the barcodes. See Figure \ref{phsphereexample} for the visualization of these points in $\RR^3$ and the barcode graphs for the first three dimensions.
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=5cm, width=5cm]{pictures_met/ph_example.PNG} 
+  \caption{Visualization of the 50 points}
+  \label{3dsphere} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=5cm, width=10cm]{pictures_met/ph_example_barcodes.png} 
+  \caption{Barcode graphs}
+  \label{spherebarcodes}
+\end{subfigure}
+\caption{Sphere example for persistent homology}
+\label{phsphereexample}
+\end{figure}
+\par For a sphere, $\beta_0=1$, $\beta_1=0$, $\beta_2=1$ and for higher dimensions, the betti number is 0, since there is one connected component, no loop, and one void in a sphere. Thus we expect this sampling from the sphere to exhibit some similar features. Indeed, checking Figure 1(b) shows some evidence that the point cloud where the 50 points are sampled from may be a sphere. We set the maximum $\epsilon$ to 2 since this is the maximum possible distance between any pair of points. Thus at $\epsilon=2$, it is guaranteed that every point is connected to the rest. In Dimension 0, there is no similarly persistent bar as the top bar; this indicates that there is one persistent connected component. In Dimension 1, there are no persistent bars, and thus no persistent loops. In Dimension 2, there is one relatively persistent bar that represents a void born around $\epsilon=1.4$ and filled in around $\epsilon=1.7$. Remember the persistent bars are likely to be the real structure of the original point cloud. In this way, barcode graphs encapsulate the homology of a filtration and, we can differentiate between the real structure and noise from an input point cloud. 
+\subsection{The Mapper Algorithm}
+\subsubsection{Introduction}
+The Mapper algorithm was originally proposed in a paper written by Singh, M\'emoli, and Carlsson from Stanford University \cite{originalmapper}. This algorithm visually simplifies a plot of multidimensional data points with strategic clustering. A part of the Mapper algorithm's robustness has to deal with its independence from clustering algorithms and metrics, meaning the algorithm is able to generate outputs on any clustering algorithm and any metric. Hence, the algorithm intends on visualizing more general properties of the data set within the topological framework with its motivations from more theoretical perspectives.
+
+\subsubsection{Description of the Algorithm}
+
+\par The Mapper algorithm, essentially, takes an entire point cloud of data and produces a visualization as a simplicial complex. In its applications, we treat the simplicial complex more as a network of nodes from the point of view of exploratory analysis. In contrast, computations of persistent homology uses a sample of the initial data and generates a filtration of simplicial complexes and calculates persistent features across these. The steps are as follows: 
+\newline
+\par If the data is high-dimensional, we first want to project it into a lower dimension using a filter function. Depending on the filter function $f: X \rightarrow \mathbb{R}$ we choose, where $X$ is our point cloud of data, the preserved structure of the data will be different. The filter function can be very straightforward. For example, in the original Mapper paper, the authors illustrate a projection from three dimensional coordinates representing a hand to the y-coordinate of each point. As opposed to projecting onto the x-coordinate or z-coordinate, the y-coordinate best preserves the original shape of the hand. Alternatively, the function can be more involved, such as using MDS (multidimensional scaling) or PCA (principal component analysis), where we want to summarize the data across dimensions. See Figure \ref{kmodes_pic} for a simple projection onto the Length and Width columns of an artwork. 
+\newline
+\par We then create an open cover of this lower-dimensional projection (often in $\mathbb{R}$ or $\mathbb{R}^2$). The definition of open cover of $X$ is a collection of subsets of $X$ such that $X$ is in the union of these subsets. For example, if we have data on the real line on the open interval (0, 100) with overlap .5, the intervals are (0, 12.5), (7.5, 22.5), (17.5, 32.5) and so on. The user can change this overlap proportion to anywhere from 0- 1. If the overlap is 0, the resulting simplicial complex will have completely disconnected nodes, whereas if it is 1, each node will be connected. When we take the preimage of this cover, we also produce an open cover of the original point cloud since the filter function is continuous. \cite{2018arXiv180300384C}
+\newline
+\par For our purposes, the overlap given above is a good cover, since every nonempty intersection
+$\cap_{i \in\sigma} U_i$, for $\sigma \subseteq \{1,...,n\}$, is contractible \cite{2016arXiv160501905C}. According to the Nerve theorem, the nerve of this cover, which is our output, has the same homotopic type as the original data. 
+\newline
+\par The user can specify the number of covering intervals. Depending on the number of intervals, the graph can preserve more detail or less detail about the original data. In the original paper, this choice is referred to as the 'resolution'. While it is not proof that we have a "good cover" of the data, we can at least check if there is any information we are missing for one particular resolution. The 'ideal' number of intervals or overlap percentage depends on what we want to reveal about the data. 
+\newline
+\par Once the data is projected in lower dimension and we have defined a cover on the interval, we want to cluster on the "pullback of the cover". The pull back of the cover is simply the inverse of each set of the cover. That is, the preimage of intervals of the cover are subsets $X$ and $Y$ of the original data set. If $X \cap Y$ is nonzero, then there will clearly exist clusters in $X$ and $Y$ that will have nonzero intersection. The points in the inverse of each interval are clustered and form a node. Nodes are connected when the intersection between any two clusters in any two hypercubes is nonzero. This is idea of partial clustering.  \cite{originalmapper}
+\newline
+\par Lastly, we color these nodes by some continuous color function, such as Object Year, Area, etc. In the MET case, we color by whether an artwork is Public Domain or not, which is a boolean variable. We can also color by categorical function but the interpretation is less clear as to what a mix of colors is. In the arXiv case, we color by academic categories. We then look at the simplicial complex for any flares in the data or any uniform clusters of color. By flare we mean if part of the simplicial complex branches off from the main body or there is a split in the complex. If there is a distinguishing feature, we can examine the nodes in that cluster/flare for further statistical analysis or draw conclusion from their color. 
+
+\subsubsection{Examples}
+We use the Python implementation of Mapper - Kepler Mapper 1.1.6 \cite{keppler-mapper} to generate Mapper outputs in this paper. One straightforward application of Mapper is topological summary of 3D shapes. In the following example, we take the point cloud of a sphere (Figure \ref{mapper_sphere}). The filter function maps each point to its x, y-coordinates and the coloring function is the z-coordinate. We expect to see red and blue in the center, referring to the points farthest away from the equator of the sphere.
+\begin{figure}[h]
+\centering
+\includegraphics[height=8cm,width=8cm]{pictures_met/Sphere_example.png}
+\caption{xy- projection of sphere, colored by z-coordinate}
+\label{mapper_sphere}
+\end{figure}
+\par For torus \ref{low_resolution_torus}, \ref{high_resolution_torus}, we can see loop structure in both xy and yz projection. Notice how choice of lower resolution (Figure \ref{low_resolution_torus}) can result in missing the structure of the torus. 
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=5cm, width=5cm]{pictures_met/torus1_low_resolution.png}
+  \caption{xy projection, colored by z-coordinate}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=5cm, width=5cm]{pictures_met/torus2_low_resolution.png}
+  \caption{yz-projection, colored by x-coordinate}
+  \label{fig:sub2}
+\end{subfigure}
+\caption{Low resolution torus (n_cubes = 4, overlap = .6)}
+\label{low_resolution_torus}
+\end{figure}
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=5cm, width=5cm]{pictures_met/torus1_resolution_high.png}
+  \caption{xy-projection, colored by z-coordinate}
+  \label{fig:sub1}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=5cm, width=5cm]{pictures_met/torus2_resolution_high.png}
+  \caption{yz-projection, colored by x-coordinate}
+  \label{fig:sub2}
+\end{subfigure}
+\caption{High resolution torus, n-cubes = 7, overlap = .5}
+\label{high_resolution_torus}
+\end{figure}
+\section{Applications}
+We employ these two TDA tools to analyze two data sets, the samples from the Metropolitan Museum of Art database and the arXiv database.
+\subsection{The MET Database}
+For the MET database, we use Mapper to examine the significant feature(s) that predict(s) if an artwork is in public domain or not. We also apply persistent homology to differentiate two groups of artworks. For initial explorations, see Appendix. 
+\subsubsection{Data Collection and Cleaning}
+The original MET data \cite{metdata} contains 43 columns and 450, 000 entries. From these we selected a subset of 13 columns of approximately 50,000 rows. We selected these columns for multiple reasons. One, many of the other columns we chose not to select contained upwards of 200,000 missing values. Secondly, other columns were difficult to use to classify the data since they had too many unique values (for example, the title of each artwork, or its link on the MET website). Third, on a basic level, we were interested in defining a relationship between our data points using these columns. Before cleaning our data set, we have columns as shown in Table \ref{columns_tab}.\\
+\begin{table}[htbp]
+\centering 
+\begin{tabular}{l*{4}{c}r}
+Index              & Is Highlight & Is Public Domain & Object ID & Department & Object Name  \\
+\hline
+173839 & FALSE & FALSE & 276173 & Photographs & Negative   \\
+177828            &  FALSE & FALSE & 281400 & Photographs &  Polaroid  \\
+409320           &  FALSE & TRUE & 670612 & Photographs &  Photograph  \\
+232631    &  FALSE & FALSE & 360381 & Drawings and Prints &  Book   \\
+255125    &  FALSE & TRUE & 383756 & Drawings and Prints &  Block  \\
+\end{tabular}
+\begin{tabular}{l*{3}{c}r}
+Index  & Art. Begin & Art. End  &Obj. Begin & Obj. End  \\
+\hline
+173839 & 1903 & 1975 & 1934  & 1975  \\
+177828 & 1903 & 1975&1974  & 1975    \\
+409320 &  1865 & 1931 & 1890 & 1931  \\
+232631 & 1764 $|$ 1767$|$1777...&1838$|$1855  $|$1865... & 1804 & 1838  \\
+255125 & 1471 & 1528 & 1493& 1528   \\
+\end{tabular}
+\begin{tabular}{l*{2 }{c}r}
+Index  & Medium & Dimensions\\
+\hline
+173839 & Film negative & 8 x 10 in.\\
+177828 & Instant color print & 7.9 x 7.9 cm\\
+409320 & Gelatin silver print &  Image: 4 in. Ã? 2 15/16 in. (10.1 Ã? 7.5 cm)  \\ 
+232631 &  Etching &  26 3/8 x 19 1/8 x 1 7/8 in. (67 x 48.5 x 4.8 cm)\\
+255125 & Black ink on carved pearwood & 15 1/2 Ã? 11 1/8 Ã? 1 in. (39.4 Ã? 28.3 Ã? 2.6 cm)\\
+\end{tabular}
+\begin{tabular}{l*{2}{c}r}
+Index           &  Credit Line & Classification\\
+\hline
+173839& Walker Evans Archive, 1994 & Negatives  \\
+177828        &  Walker Evans Archive, 1994 & Photographs \\
+409320       &  Purchase, Alfred Stieglitz Society Gifts, 2015 & Photographs \\
+232631   &  The Elisha Whittelsey Collection, The Elisha Whittelsey Fund, 1969 & Books  \\
+255125   & Gift of Junius Spencer Morgan, 1919 & Blocks  \\
+\end{tabular}
+\caption{Random sample of 5 from original MET data set with selected features}
+\label{columns_tab}
+\end{table}
+\par Next we clean our data set (see Table \ref{cleaning}). In the process of cleaning ``Dimensions'', we find that the values come in many formats. We choose to focus on artworks that have length and width measurements only, consolidated in one set of parentheses (for example, rows 0, 1, 2 in Table \ref{dimensions_sample}), since this is the most common format from those that we parse. During the process of cleaning ``Dimensions'', if a value is of this interested format, we first record the extracted dimensions in two newly created columns, ``Length'' and ``Width'', respectively, and then replace the value with the product of ``Length'' and ``Width''. If a value is not of the interested format, we just remove the entire entry from the data set. Further,in some cases, multiple dates for ``Artist Begin Date'' or ``Artist End Date'' are included, in which case we replace these with the average. We think this is reasonable, as most of the dates were close together, except those where one contributor was a historical figure.\\
+\begin{table}
+\input{dimensions}
+\caption{Dimensions column of random sample of original data}
+\label{dimensions_sample}
+\end{table}
+\begin{table}[H]
+    \begin{tabular}{ | c | c | c |}
+      \hline
+      \thead{Feature} & \thead{Type} & \thead{Cleaning Method} \\
+      \hline
+      Is Highlight & Boolean  & NA  \\
+      \hline
+      Is Public Domain & Boolean  & NA  \\
+      \hline
+      Object ID & Integer  & NA  \\
+      \hline
+      Department & String & NA  \\
+      \hline
+      Object Name & String$\rightarrow$Set of strings & \makecell{parse each value to extract a set of\\ meaningful words, ignoring "and", "or",\\ punctuation marks and other  delimiters}  \\
+      \hline
+      Artist Begin Date & String$\rightarrow$Integer & \makecell{parse each value to extract integer(s) \\ if multiple integers, take average}  \\
+      \hline
+       Artist End Date & String$\rightarrow$Integer & same as ``Artist Begin Date''\\
+       \hline
+       Object Begin Date & Integer & NA\\
+       \hline
+       Object End Date & Integer & NA\\
+       \hline
+       Medium & String$\rightarrow$Set of strings & \makecell{same as ``Object Name''}\\
+       \hline
+       Dimensions & String$\rightarrow$Float & \makecell{if the value is of interested format, 1) parse it to extract\\ the two dimensions and 2) replace the original string \\ with the product of these two dimensions\\if not, remove the whole entry}\\
+       \hline
+       Credit Line & String$\rightarrow$Set of strings & \makecell{same as ``Object Name''}\\
+       \hline
+       Classification & String$\rightarrow$Set of strings & \makecell{same as ``Object Name'', but ignore \\ subclassfication after the dash}\\
+      \hline
+    \end{tabular}    
+    \caption{Cleaning Process}
+    \label{cleaning}
+\end{table}
+
+In using each tool of TDA, we analyze different subsets of this cleaned data set, since we have a different research question for each tool. We will refer to this cleaned data set as ``the full data set'' in the rest of the paper. While using Kepler Mapper, we focus on the subset in which 'Artist Begin Date' and 'Artist End Date' are not missing, since we want to include more variables in our logistic regression model. We further discover that there are only 167 highlighted artworks in this data set. Thus, ``Is Highlight" does not differentiate between two artworks in a meaningful way, and we omit this feature. We will refer to this data set as ``the Mapper data set'' in the rest of the paper. The Mapper data set has 14 columns (including ``Length'' and ``Width'') and 50015 rows. We finally choose a random sample of 3000 to analyze. 
+\newline
+\par In using persistent homology, we focus on the Mapper data set and another subset of the full data set in which entries have missing values for both ``Artist Begin Date'' and ``Artist End Date''. We again omit ``Is Highlight" from the latter data set since 1) there are few highlighted artworks and 2) this feature is omitted from the Mapper data set. We will refer to the latter data set as ``the contrast data set'' in the rest of the paper. The contrast data set has 12 columns (including ``Length'' and ``Width'') and 46878 rows. Finally we drop ``Artist Begin Date" and ``Artist End Date" from the Mapper data set to make a more reasonable comparison between the Mapper data set and the contrast data set. We also remove any row with missing value for any of the variables for these two data sets.
+\subsubsection{Methods and Results}
+\textbf{4.1.2.1 Mapper Application}
+\newline
+\par At the initial stage of this project, we are inspired by Kraft's usage\cite{kraft2016thesis} of Mapper to guide logistical regression, a statistical model in which the dependent variable is binary. We think ``Is Public Domain'' is a good variable to model since it is binary. We think that it would be interesting to identify the feature(s) that discriminate between the group of public-domain artworks and the group of non-public-domain artworks. However, at this stage, we don't know how to incorporate Mapper into this process. Later, we read a paper Guo\cite{guo2017manu} in which Mapper is used to guide feature selection. Then we decide to follow the pipeline proposed by Guo to select important features associated with ``Is Public Domain''. The basic pipeline is: 
+\begin{enumerate}
+\item Use Mapper to identify interesting subgroups
+\item Perform the Wilcoxon Rank-Sum Test and proportion test on these subgroups to select relatively significant features
+\item Compare the prediction accuracy of this subset of features to that of the full set of features
+\end{enumerate}
+\par The Wilcoxon rank-sum test is a non-parametric test of the null hypothesis that two sets of measurements are drawn from the same distribution\cite{scipy}. The proportion test tests whether one population proportion p1 equals a second population proportion p2\cite{proportiontest}. Notice that in the first step, we drop ``Is Public Domain'' from our data set since we want to examine the independent variables. ``Is Public Domain'' is the dependent variable and we use it as a color function in our Mapper output.
+\newline
+\par As introduced in the previous section, Mapper gives its users freedom in choosing parameters; however, this freedom comes with challenge. The challenge that using Kepler Mapper with our data set poses is threefold. 
+\newline
+\par The first challenge is choosing a filter function. We choose to use MDS (Multidimensional scaling)\cite{BorgGroenen2005} as our filter function, projecting to $\mathbb{R^2}$. One advantage of MDS is that we can input a precomputed distance matrix with our metric. Also, MDS aims to preserve information about the distance between points in the original space. Since our data is mixed and for our purpose of feature selection, it is not meaningful to only project onto one or two numerical variables. For example, if two artworks have similar Length and Width, they are not necessarily related. In the initial stage of this project, we did project our data onto some feature as an exploration step (Appendix). 
+\newline
+\par The second challenge is choosing a clustering algorithm. The Kepler Mapper default clustering method is DBSCAN (Density-based spatial clustering of applications with noise)\cite{dbscan}. The parameters are epsilon (the maximum radius for points to be considered close together), the metric, and minimum samples (the minimum points that a cluster can have). Since the default is Euclidean metric, we have to pass our own metric (see the next paragraph) as parameter. We noticed that the pairwise distance matrix contains relatively large distances (with median about 4.5 and mean about 4.3), therefore the original epsilon value (0.5) was too small. Since our sample size is 3000 and we want to have reasonably large clusters, we set epsilon to 5 and mininum samples to 10. Choosing these parameters is a disadvantage of DBSCAN. However, we chose to use DBSCAN instead of K-family clustering algorithms because we do not have to specify the clusters in advance when we initialize the clusterer. Choosing number of clusters beforehand is considered as an undesired characteristic of a clustering algorithm in the original Mapper paper\cite{originalmapper}. Also, for numerical data, while K-means has tendency to find convex clusters, DBSCAN is density based so is sensitive to other patterns\cite{Kmodes_paper}. At the initial stage of this project, we did explore K-family algorithms (see Appendix).
+\newline
+\par Another challenge is designing a metric to measure the distance (dissimilarity) between a pair of artworks. Since we have mixed types of data (numerical and categorical), we combine metrics for each type together to create our custom metric. Our custom metric is a sum of 13 subscores of distance, one for each feature. For categorical variables, we calculate the Jaccard distance\cite{jaccard}. For numerical variables, we calculate a subscore as $\frac{x_i-y_i}{maxDiff_i}$, where $x$, $y$ are two artworks, $x_i$, $y_i$ are their $i$th numerical feature's values, and $maxDiff_i$ is $max(x_i-y_i)$ for all $x, y$ in the data set. For "Object ID", we output $0$ if the two artworks are the same (they have same ID) and $1$ otherwise. For "Department", since there are only 10+ unique values, we decide to calculate a subscore using the same method as the one for "Object ID". Notice that each subscore is within the range $[0, 1]$ and thus the maximum possible distance between two artworks is 13. See initial explorations for metric design in Appendix. In the next two propositions, we prove that our custom metric is a metric.
+\begin{proposition}
+Let $d_1$ be a metric on $X$ and $d_2$ a metric on $Y$. Define $d_3: (X \times Y) \times (X \times Y)\rightarrow \RR$ as $d_3((x_1, y_1),(x_2, y_2))=d_1(x_1,x_2)+d_2(y_1,y_2) \forall x_1, x_2 \in X$ and $\forall y_1, y_2 \in Y$. $d_3$ is a metric.
+\end{proposition}
+\begin{proof}
+We prove that $d_3$ satisfies every requirement for a metric.
+
+Requirement 1: for a metric $d$, $d(x,y)\geq 0 \forall x, y \in X$.
+
+Proof: since $d_1$ and $d_2$ are metrics, $\forall x_1, x_2 \in X$, $d_1(x_1, x_2)\geq 0$ and $\forall y_1, y_2 \in Y$, $d_2(y_1, y_2)\geq 0$. Thus $\forall x_1, x_2 \in X$ and $\forall y_1, y_2 \in Y$, $d_3((x_1, y_1),(x_2, y_2))=d_1(x_1,x_2)+d_2(y_1,y_2) \geq 0$.
+
+Requirement 2: for a metric $d$, if $x=y$, $d(x,y)=0$.
+
+Proof: since $d_1$ and $d_2$ are metrics, if $x_1=x_2$, $d_1(x_1, x_2)=0$ and if $y_1=y_2$, $d_2(y_1, y_2)=0$. Notice that by definition $(x_1, y_1)=(x_2, y_2)$ if and only if $x_1=x_2$ and $y_1=y_2$. Thus for $(x_1, y_1)=(x_2, y_2)$, $d_3((x_1, y_1),(x_2, y_2))=d_1(x_1,x_2)+d_2(y_1,y_2)=0$.
+
+Requirement 3: for a metric $d$, if $d(x,y)=0$, $x=y$.
+
+Proof: since $d_1$ and $d_2$ are metrics, if $d_1(x_1,x_2)=0$, $x_1=x_2$ and $d_2(y_1,y_2)=0$, $y_1=y_2$. If $d_3((x_1, y_1),(x_2, y_2))=d_1(x_1,x_2)+d_2(y_1,y_2)=0$, then $d_1(x_1,x_2)=d_2(y_1,y_2)=0$, then $x_1=x_2$ and $y_1=y_2$ and $(x_1, y_1)=(x_2,y_2)$.
+
+Requirement 4: for a metric $d$, $d(x,y)=d(y,x) \forall x, y \in X$.
+
+Proof: since $d_1$ and $d_2$ are metrics, $d_1(x_1, x_2)=d_1(x_2, x_1) \forall x_1, x_2 \in X$ and $d_2(y_1, y_2)=d_2(y_2, y_1)$, $\forall y_1, y_2 \in Y$. Thus, $d_3((x_1, y_1),(x_2, y_2))=d_1(x_1,x_2)+d_2(y_1,y_2)=d_1(x_2, x_1)+d_2(y_2, y_1)=$\newline$d_3((x_2, y_2),(x_1, y_1))$.
+
+Requirement 5: for a metric $d$, $d(x,y)+d(y,z)\geq d(x,z) \forall x,y,z \in X$.
+
+Proof: since $d_1$ and $d_2$ are metrics, $\forall x_1, x_2, x_3 \in X, d_1(x_1, x_2)+d_1(x_2,x_3)\geq d_1(x_1, x_3)$ and $\forall y_1, y_2, y_3 \in Y, d_2(y_1, y_2)+d_2(y_2,y_3)\geq d_1(x_1, x_3)$. Thus $\forall (x_1, y_1), (x_2, y_2), (x_3, y_3) \in X \times Y$, \newline$d_3((x_1, y_1),(x_2, y_2)) + d_3((x_2, y_2),(x_3, y_3))=d_1(x_1, x_2)+d_2(y_1, y_2)+d_1(x_2, x_3)+d_2(y_2, y_3)=d_1(x_1, x_2)+d_1(x_2, x_3)+d_2(y_1, y_2)+d_2(y_2, y_3)\geq d_1(x_1, x_3)+d_2(y_1, y_3)=d_3((x_1,y_1),(x_3,y_3))$.
+\end{proof}
+
+\begin{proposition}
+The function $d: X \times X \rightarrow R$, defined as $d(x_1, x_2)=$
+\[ \begin{cases} 
+      1 & x_1 \neq x_2 \\
+      0 & x_1 = x_2
+   \end{cases}
+\]
+is a metric.
+\end{proposition}
+\begin{proof}
+We prove that $d$ satisfies every requirement for a metric.
+
+Requirement 1 Proof: since the least value that $d$ outputs is $0$, this requirement is satisfied.
+
+Requirement 2, 3 and 4 Proof: by definition of $d$, this requirement is satisfied.
+
+Requirement 5 Proof: there are 5 cases for $x_1, x_2, x_3 \in X$ and each satisfies Requirement 5. 
+\end{proof}
+Also notice that our custom metric for numerical variables is indeed a metric since it is just a constant times the Euclidean distance for $\RR$. Thus, our final metric, a combination of our metric for categorical variables (Jaccard distance), metric for numerical variables and metric for ``Object ID'' and ``Department'' (metric in the above proposition), by the first proposition, is indeed a metric.
+\newline
+\par Yet another challenge is Kepler Mapper is not compatible with non-numerical variables. Initially we think about assigning each string a meaningful numerical value. However, many of the categorical variables do not have a natural order. Thanks to Professor Ortiz, we realized that we could use dictionaries as an intermediate step. Then we defined dictionaries for each categorical variable. The values of the dictionaries are sets of strings (see Table \ref{cleaning}); the keys were numerical values, which are simply the category codes for each variable. After creating the dictionaries, we replace the string values with the assigned numerical values in our data set. Note that Mapper does not actually use the numerical value in the computation of the clustering, but rather only to reference the original value when calculating pairwise distances between data points. 
+\par Using this set of parameters for Kepler Mapper with ``Is Public Domain'' as the color function, we obtain an output graph that has two flares (see Figure 2). Nevertheless, these flares are not persistent through different resolutions or different samples of our subset (we tried a total of 12 random samples). However, there are almost always a red subgroup and a blue subgroup (such as the highlighted parts in Figure \ref{met_mapper}). Thus they are persistent features of our data. They are of two extreme colors, red and blue, indicating their extreme percentage of public-domain artworks. We  choose to focus on these highlighted subgroups to guide feature selection.
+\begin{figure}[H]
+\centering\includegraphics[height=8cm,width=8cm]{pictures_met/mapper.PNG}
+\caption{Mapper output with MDS as lens, DBSCAN as clustering algorithm and the custom metric. Number of hypercubes is 10 and percentage of overlapping is 0.35. Colored by ``Is Public Domain''. Red nodes have a high percentage of public-domain artworks in them, and blue nodes have a low percentage.}
+\label{met_mapper}
+\end{figure}
+We now focus on the artworks in these two subgroups. We perform a proportion test on ``Is Public Domain'' of these artworks, and the p-value is significant at the 0.001 significance level, indicating there does exist a difference in the percentage of public domain artworks in these two subgroups. We then perform the Wilcoxon Rank-Sum Test to the continuous, numerical features and proportion test to dummy variables of ``Department'' (Table \ref{tab1} and Table \ref{tab2}).
+\begin{table}[htbp]
+        \centering
+        \begin{tabular}{c|c|c|c|c|c|c|c|}
+            \cline{2-8}
+             & \multicolumn{7}{|c|}{Features}\\
+            \cline{2-8}
+             & 1 & 2 & 3 & 4 & 5 & 6 & 7 \\
+            \hline
+            \multicolumn{1}{|c|}{p-value} & 3.84e-31 & 1.01e-24 &  1.49e-30 & 5.16e-28 & 9.77e-59 & 4.81e-50 & 1.39e-61\\
+            \hline
+        \end{tabular}
+        \caption{Results for Wilcoxon Rank-Sum Test. Features 1-7 correspond to: Artist Begin Date, Artist End Date, Object Begin Date, Object End Date, Area, Length, Width}
+        \label{tab1}
+    \end{table}
+
+\begin{table}[htbp]
+        \centering
+        \resizebox{\textwidth}{!}{
+        \begin{tabular}{c|c|c|c|c|c|c|c|c|c|}
+            \cline{2-10}
+             & \multicolumn{9}{|c|}{Features}\\
+            \cline{2-10}
+             & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9\\
+            \hline
+            \multicolumn{1}{|c|}{p-value} & 5.65e-53 & 0.006 &  3.54e-42 & 8.58e-289 & 3.16e-74 & 4.02e-62 & 2.32e-07 & 3.20e-06 &  0.00072 \\
+            \hline
+        \end{tabular}}
+        \caption{Results for proportion test. Features 1-9 correspond to: American Decorative Arts, Arms and Armor, European Sculpture and Decorative Arts, Drawings and Prints, Photographs, Arts of Africa, Oceania, and the Americas, Robert Lehman Collection, The Cloisters, Modern and Contemporary Art}
+        \label{tab2}
+    \end{table}
+Every feature could be considered statistically significant if we rely on p-values above, since the number of artworks in the focused subgroups is very large. Notice, however, that the dummy variable ``Drawings and Prints'' has an outstanding p-value compared to other variables, 8.58e-289. Thus, we hypothesize that this single feature is a powerful discriminating feature between these two subgroups. To test our hypothesis, we build two logistic regression models on ``Is Public Domain'', one based on ``Drawings and Prints'' that we call the ``reduced model'' and one based on the set of numerical features and dummy variables that we call the ``full model''. We train and test our models on the sample of 3000 by using 80\% of the sample as train data and 20\% as test data. In this step, we use the train_test_split() method provided by sklean\cite{scikit-learn}. The model accuracy score, evaluated by the score() method of sklearn\cite{scikit-learn}, of the reduced model is 52.17\% and that of the full model is 73.83\%. We repeat the train and test procedure on the Mapper data set, and observe that the model accuracy score of the reduced model is 55.30\% and that of the full model is 72.58\%. 
+\bigbreak
+\bigbreak
+\noindent\textbf{4.1.2.2 Persistent Homology Application}
+\newline
+\par Inspired by Carstens\cite{weights} and Zhu\cite{zhu2013language}, we decide to use persistent homology to differentiate between the Mapper data set and the contrast data set. Interestingly, the two data sets are of similar size. The basic pipeline is: 
+\begin{enumerate}
+\item Select random samples from each data set
+\item Identify their respective persistent intervals
+\item Examine the artworks in these persistent intervals and identify the difference(s) between the artworks in different group's persistent intervals
+\end{enumerate}
+\par Notice that in this stage, we change our metric to accommodate the two data sets by dropping the subscores which evaluate the dissimilarity for ``Artist Begin Date'' and ``Artist End Date" and adding in a metric measuring the dissimilarity for ``Is Public Domain'', since in these two data sets we keep this boolean variable. As the metric for ``Object ID'' and ``Department'', we output 1 if two artworks have the same value and 0 otherwise. We generate 12 random samples each of 150 artworks for each data set (thus a total of 24 samples) and compute a distance matrix for each using our modified custom metric. For each sample, we compute barcodes for Dimension 1, the dimension of interest.
+\par We notice that for Dimension 1 most of the 24 samples have at least one barcode in the interval $[4, 5)$. The length of these barcodes is about 1, and for both groups these barcodes are among the longest (most persistent) ones considering all barcodes. Thus for both groups this interval is the most persistent. Further, we observe that for the group with missing Artist Begin Date and Artist End Date, there are, in general, more persistent barcodes (barcodes whose length is around 1) and particularly more persistent barcodes in this interval (Table \ref{tab3}, Table \ref{tab4}). This intuitively means that there are more loops in this relatively persistent interval. 
+\begin{table}[!htbp]
+        \centering
+        \begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c|c|}
+            \cline{2-13}
+             & \multicolumn{12}{|c|}{Samples}\\
+            \cline{2-13}
+             & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 \\
+            \hline
+            \multicolumn{1}{|c|}{num of barcodes aounrd $[4, 5)$} & 1 & 2 & 3 & 2 & 2 & 5 & 2 & 1 & 1 & 0 & 2 & 2 \\
+            \hline
+            \multicolumn{1}{|c|}{num of persistent barcodes} & 1 & 2 & 4 & 4 & 6 & 4 & 4 & 1 & 5 & 1 & 3 & 2 \\
+            \hline
+        \end{tabular}
+        \caption{Number of barcodes around $[4,5)$  and number of barcodes of length around 1 for samples of the Mapper data set}
+        \label{tab3}
+    \end{table}
+\begin{table}[!htbp]
+        \centering
+        \begin{tabular}{c|c|c|c|c|c|c|c|c|c|c|c|c|}
+            \cline{2-13}
+             & \multicolumn{12}{|c|}{Samples}\\
+            \cline{2-13}
+             & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 \\
+            \hline
+            \multicolumn{1}{|c|}{num of barcodes around $[4, 5)$]} & 5 & 6 & 4 & 4 & 4 & 11 & 3 & 1 & 4 & 1 & 5 & 4 \\
+            \hline
+            \multicolumn{1}{|c|}{num of persistent barcodes} & 7 & 6 & 7 & 5 & 5 & 12 & 6 & 2 & 7 & 1 & 10 & 7 \\
+            \hline
+        \end{tabular}
+        \caption{Number of barcodes around $[4,5)$  and number of barcodes of length around 1 for samples of the contrast data set}
+        \label{tab4}
+    \end{table}
+\par Next, for each data set we choose 3 of the 12 random samples to analyze the barcodes in $[4,5)$ (see  Figure \ref{metbarcodes} for the barcode graphs of these 6 samples below and compare the graphs with Table \ref{tab3} and Table \ref{tab4}). 
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4.5cm, width=3cm]{pictures_met/met3.png}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4.5cm, width=3cm]{pictures_met/met7.png} 
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4.5cm, width=3cm]{pictures_met/met11.png} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4.5cm, width=3cm]{pictures_met/con1.png} 
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4.5cm, width=3cm]{pictures_met/con4.png} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4.5cm, width=3cm]{pictures_met/con9.png} 
+\end{subfigure}
+\caption{Dimension 1 barcodes for 6 selected samples}
+\label{metbarcodes}
+\end{figure}
+Recall that barcodes track the birth and death of a homology generator, a homology class. For any barcode, javaPlex chooses one class representative and gives the indices of the artworks which are the vertices of this representative. We choose to analyze the artworks which form the loops in $[4,5)$ in these 6 samples (recall that barcodes in Dimension 1 represent loops). See Appendix for the roadblocks we encounter when we try to extract these artworks. We observe that most of the artworks that form the Mapper data set's loops are in the department ``Drawings and Prints'', whereas there are more various kinds of artworks in the loops of the contrast data set. However, the artworks in the loops of the contrast data set have less various credit lines and Medium. The distribution of each numerical variable is different for the artworks from the two data sets (Figure \ref{obdoed}, Figure \ref{dims}).
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4cm, width=7cm]{pictures_met/obd_df.png} 
+  \caption{Distribution of Object Begin Date for artworks in the loops of the Mapper data set}
+  \label{fig 4:sub1} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4cm, width=7cm]{pictures_met/obd_df2.png} 
+  \caption{Distribution of Object Begin Date for artworks in the loops of the contrast data set}
+  \label{fig 4:sub2}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4cm, width=7cm]{pictures_met/oed_df.png} 
+  \caption{Distribution of Object End Date for artworks in the loops of the Mapper data set}
+  \label{fig 4:sub3} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=4cm, width=7cm]{pictures_met/oed_df2.png} 
+  \caption{Distribution of Object End Date for artworks in the loops of the contrast data set}
+  \label{fig 4:sub4}
+\end{subfigure}
+\caption{Distribtion of Object End Date for artworks in the loops}
+\label{obdoed}
+\end{figure}
+\begin{figure}[H]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/dim_df.png} 
+  \caption{Distribution of Area for artworks in the loops of the Mapper data set}
+  \label{fig 5:sub1} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/dim_df2.png} 
+  \caption{Distribution of Area for artworks in the loops of the contrast data set}
+  \label{fig 5:sub2}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/len_df.png} 
+  \caption{Distribution of Length for artworks in the loops of the Mapper data set}
+  \label{fig 5:sub3} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/len_df2.png} 
+  \caption{Distribution of Length for artworks in the loops of the contrast data set}
+  \label{fig 5:sub4}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/wid_df.png} 
+  \caption{Distribution of Width for artworks in the loops of the Mapper data set}
+  \label{fig 5:sub5} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[height=3cm, width=5cm]{pictures_met/wid_df2.png} 
+  \caption{Distribution of Width for artworks in the loops of the contrast data set}
+  \label{fig 5:sub6}
+\end{subfigure}
+\caption{Distribution of Area (Length $\times$ Width), Length, Width for artworks in the loops}
+\label{dims}
+\end{figure}
+\subsubsection{Discussion}
+From the Mapper application, we see that TDA can guide feature selection. The relatively close model accuracy scores indicate the Mapper algorithm's effectiveness. From the persistent homology example, we see that TDA can guide classification. Given a sample from the Mapper data set and a sample from the contrast data set, one can potentially differentiate between them by comparing the number of persistent barcodes and the distributions of numerical variables. Our applications show that TDA is a good approach to big and complex data.
+
+However, our study has several limitations. Since we only focus on artworks with 2 dimensions, our results cannot be applied to a larger data set. Moreover, due to the availability of data, we have limited kinds of numerical features, which can lead to omitted variable bias in our statistical models.
+
+\subsection{The arXiv e-print Database}
+
+\subsubsection{Introduction}
+
+\par For this part of the project, we focused our attention on the arXiv (pronounced  "archive"), which is an online repository hosted by Cornell University for academic paper submissions, mostly in the natural sciences and other quantitative fields. This online archive consists of electronic preprints (e-prints) that have been approved for publication. The subject of the these preprints consist of scientific papers ranging from subjects in STEM and are available to the public for free. More importantly, the service also offers an API framework to facilitate the programming tasks involving data retrieval from the repository. Thus, we took the opportunity of this open access and chose a small subset of the data to analyze using TDA. We formed a topological space of our point cloud of papers and experimented with various metrics to achieve persistent homology results. 
+\newline
+\par Initially, we began the project by exploring the API documentation that arXiv offered to the public. We explored a python module that would allow easy access to the arXiv API and exploration thereof. However, we reached a roadblock when we fooled around with extracting too many files at once from the online API. We soon found out that this was making our script look like a "robot" which was strictly prohibited on arXiv's terms. As a result, the arXiv blocked us from retrieving and storing data directly from the online API. It was a learning experience in that we learned the significance of reading the terms and conditions of any service we partake in. Despite this obstacle, we approached other solutions. We instead looked at attaining bulk data from Amazon S3, a cloud computing web service, which allowed us to download a significant amount of data from arXiv for a very small fee. After doing so, we were able to download roughly 2000 pdf files (2286 files to be exact) ranging from all subjects of the arXiv in the year 2000. 
+\subsubsection{Data Collection and Cleaning of the 125 TDA Papers}
+\par Data collection for this arXiv was made quick and possible due to the free API usage made available to the public on arXiv.org\cite{arXivAPI}. Following guidelines from the API and exploring a python module called "arxiv", we were able to extract a subset of query results personalized that whatever parameters we gave. In the beginning, we mainly concerned ourselves with one subject: topological data analysis. We specialized our code to retrieve 125 papers containing the phrase "topological data analysis" in the abstract. From these, we used various python modules to clean the data by parsing out only wanted features of the query results. See the following table summarizing the features extracted. 
+
+\begin{center}
+    \begin{tabular}{ | c | c | c |}
+      \hline
+      \thead{Feature} & \thead{Type} & \thead{Cleaning Method} \\
+      \hline
+      Authors & Set$\rightarrow$List of Strings  & \makecell{parse out delimiters and create column \\ for cleaned strings}  \\
+      \hline
+      Number of Authors & List of Strings$\rightarrow$Integer  & \makecell{compute the number of authors \\ from "Authors" per paper}  \\
+      \hline
+      Weights & Float & \makecell{Computed as $\omega = \frac{1}{n-1}$ where n is the number \\ of authors, if =1, $\omega = 0$}  \\
+      \hline
+      Summary & Set$\rightarrow$List of Strings & \makecell{parse out delimiters and create a column \\ for cleaned strings}  \\
+      \hline
+      Length of Summary & List of Strings$\rightarrow$Integer & \makecell{compute the number of words \\ in each summary \\ from "Summary"}  \\
+      \hline
+       Published Date & String$\rightarrow$Float & \makecell{parse out delimiters and create a column \\ of time values computed as time = $\frac{x}{avg(x)}$ \\ where x is the number of seconds from 1970 \\ to the published date} \\
+      \hline
+       Academic Category & String$\rightarrow$Integer & \makecell{parse out academic categories \\ and create an array for use as \\ a color function}\\
+      \hline
+    \end{tabular}
+  \end{center}
+
+\subsubsection{Methods and Results of the 125 TDA Papers}
+
+\par When we were able to download and save 125 papers whose abstract contained the following phrase: "topological data analysis", we were able to extract the author names, academic category, summary detail, published date, and updated date. We kept only the author names and dates at the time. By computing the length of number of authors per paper, we constructed a weight function similar to the one used in the paper by Carstens and Horadam.\cite{weights} 
+\begin{equation} 
+\omega = \frac{1}{n-1} 
+\end{equation} where n = number of authors. 
+\newline
+\par This weight function allowed us to describe the "closeness" of the relationships between coauthors in a paper. If the paper only had one author, then we disregarded this paper out of the DataFrame. We establish that if there are many coauthors in a paper, the relationship between the coauthors would not be as strong as papers with fewer coauthors. This is assuming that when a lot of people work together, the people in this large group may not know each other as well than for people in a smaller group. As a result if $\omega$ was very close to 0, then the relationship between coauthors would be weak, versus, if $\omega$ was very large, the relationship between coauthors would be close. We added these values as a new column in our DataFrame. Other than this, we were able to add more columns to the dataframe. By using a python module called "PyPDF2" (cite) we were able to extract the number of pages for each article. Using "refextract" (cite) we were able to extract references and the amount of references each paper has. 
+\newline 
+\par After creating a stable DataFrame to work with, we created a csv file and stored the information locally on our computers. We next created a distance matrix using "scipy" to compute pairwise distances from predefined metrics (cite). From this, we explored Dionysus, a C++ library with python bindings, that specializes in computing persistent homology (cite). We created persistent diagrams and barcodes for multiple dimensions, mainly the 0th and 1st dimension. Then, we used this to analyze the higher dimensional shape and features of our data by spotting the homology generators. We used Mapper to help us understand further what our data looks like in 3D space. This allowed us the possibility to connect ideas from our Dionysus results to our Mapper visualization. When we explored various metrics to define distances between pairs of points in our data, we worked with predefined metrics, such as the Euclidean metric, before exploring customized metrics. 
+\newline 
+\par We used a 3 dimensional array consisting of the following parameters: weights, page numbers, and reference numbers. Figure \ref{pic-125papers-0th-euclidean} and Figure \ref{pic-125papers-0th-euclidean-bars} portray the persistent diagram and barcodes, respectively, for the 0th dimension of the 125 TDA papers using the Euclidean metric. From the barcodes, we analyze to find persistent bars that indicate generators for the 0th homology group which give us the 0th Betti number. Note that the persistent diagram has one point that is very far apart form the normal line, thus indicating a persistent bar, which we can also clearly see in the barcodes diagram. From these results, we can say the 0th Betti number is 1. 
+
+\begin{figure}[H]
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_euclidean_0th_125papers.png} 
+  \caption{Persistence diagram}
+  \label{pic-125papers-0th-euclidean} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_euclidean_0th_bars_125papers.png} 
+  \caption{Barcodes}
+  \label{pic-125papers-0th-euclidean-bars}
+\end{subfigure}
+\caption{Persistent homology results for the 0th homology group using the Euclidean metric}
+\label{fig-125papers-0th-euclidean}
+\end{figure}
+
+\par For Figure \ref{pic-125papers-1st-euclidean} and \ref{pic-125papers-1st-euclidean-bars}, we have a bit more complicated results but the same principles apply. We can see a persistent barcode from $\epsilon\approx 7.5$ to $\epsilon\approx 11$ in Figure \ref{pic-125papers-1st-euclidean-bars}. This signifies that the first Betti number is at least 1 (with judgment). 
+
+\begin{figure}[H]
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_euclidean_1st_125papers.png} 
+  \caption{Persistence diagram}
+  \label{pic-125papers-1st-euclidean} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_euclidean_1st_bars_125papers.png}
+  \caption{Barcodes}
+  \label{pic-125papers-1st-euclidean-bars}
+\end{subfigure}
+\caption{Persistent homology results for the 1st homology group using the Euclidean metric.}
+\label{fig-125papers-1st-euclidean}
+\end{figure}
+
+\par When we look at the Mapper output for this data set using the euclidean metric, we do indeed see a loop in one of our clusters as seen in Figure \ref{pic-125papers-euclidean-mapper}. However, we cannot confirm that this loop is a result from the Dionysus output. We can, however, analyze the clusters that arrive from the Mapper algorithm, DBSCAN, and the lenses to try to understand why we get certain loops or clustering. 
+
+\begin{figure}[H]
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot-euclidean-mapper_125papers.png}
+\caption{Mapper output for the 125 TDA papers using the Euclidean metric, colored by weights}
+\label{pic-125papers-euclidean-mapper}
+\end{figure}
+
+\par Next, we explored a different predefined metric called the Manhattan metric, also commonly known as the "city-block" metric. In Figure \ref{pic-125papers-cityblock} we see the persistence diagram for the first dimension. As one can see, as the radius of our epsilon increases, more points seem to appear farther from the normal line. This is shown as persistent barcodes near $\epsilon\approx 20$ in Figure \ref{pic-125papers-cityblock-bars}. This result for the first dimension is promising, since we can say that there is at least one homology generator for this dimension. The 1st Betti number appears to be at least 3 (given judgment). 
+
+\begin{figure}[h]
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_cityblock_1st_125papers.png} 
+  \caption{Persistence diagram}
+  \label{pic-125papers-cityblock} 
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_cityblock_1st_bars_125papers.png}
+  \caption{Barcodes}
+  \label{pic-125papers-cityblock-bars}
+\end{subfigure}
+\caption{Persistent homology results for the 1st homology group using the Manhattan metric.}
+\label{fig-125papers-cityblock}
+\end{figure}
+
+\par Following this, we explored its Mapper result, and from the visualization, we see primarily four clusters. Since the weight was also projected onto and used as a coloring function, there is a pattern of colors in the clusters as there was in the Euclidean Mapper output. Figure \ref{pic-125papers-cityblock-mapper}. After comparing the Manhattan results to the Euclidean results, we decided to create our own metric.   
+
+\begin{figure}[h]
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot-cityblock-mapper_125papers.png}
+\caption{Mapper output for the for the 125 TDA papers using the Manhattan metric}
+\label{pic-125papers-cityblock-mapper}
+\end{figure}
+
+\par To create a new metric, we considered the persistent homology results from the Euclidean and the Manhattan metric. We started off simply by deciding to manipulate predefined metrics so that our customized metric would be a linear combination of other predefined metrics. We knew that since a metric space is a vector space that the vector axioms would still apply. We were inspired by the absolute value of a difference of values from the Manhattan metric. It produced promising results as seen in Figure \ref{pic-125papers-cityblock} and Figure \ref{pic-125papers-cityblock-bars}. Therefore, we decided to do something similar. With that being said we defined the following metric and produced interesting results with our data set using this metric. 
+\newline
+
+\textbf{Proposition}: The following formula, named $d_{arXiv}(x,y)$, is a metric in the space of papers in our point cloud:
+	\begin{equation}
+	d(x,y)=\sum_{i=1}^{n}\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid.
+	\end{equation}
+	\begin{proof}
+		We show that Equation(1) follows the following four conditions of a metric space: 						
+        \begin{enumerate}
+			\item $d_{arXiv}(x,y)\geq 0$
+			\item $d_{arXiv}(x,y)=0$ if and only if $x=y$
+			\item $d_{arXiv}(x,y)=d_{arXiv}(y,x)$
+			\item $d_{arXiv}(x,z)\leq d_{arXiv}(x,y)+d_{arXiv}(y,z)$
+		\end{enumerate}
+		First, let $x,y\in\mathbb{R}^n$ be arbitrary vectors.\newline For the first condition, note that the components of $x$ and $y$ are real numbers. Let $x_1$ and $y_1$ be arbitrary real numbers as components of $x$ and $y$ respectively. Then, 
+        \begin{equation}
+		\mid\frac{1}{x_1+1}-\frac{1}{y_1+1}\mid\geq 0
+		\end{equation} since the terms in the absolute value are real. Since $x_1$ and $y_1$ are abitrary, this results applies for all $x_i$ and $y_i$ in $1\leq i\leq n$. Thus, the first condition is satisfied.\newline For the second condition, we first assume the forward direction. Say $d_{arXiv}(x,y)=0$. Then,
+        \begin{dmath}
+		0 = \sum_{i=1}^{n}{\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid} = {\mid\frac{1}{x_1+1}-\frac{1}{y_1+1}\mid} + {\mid\frac{1}{x_2+1}-\frac{1}{y_2+1}\mid} + ... + {\mid\frac{1}{x_n+1}-\frac{1}{y_n+1}\mid}.
+        \end{dmath}
+		As before, it must be that the absolute value of the difference of two real numbers is either 0 or greater. So, if the finite sum is equal to 0, it must be that each term is equal to 0. Thus for any $i$ in $1\leq i\leq n$, we have that 
+        \begin{equation}
+		{\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid} = 0
+		\end{equation} 
+		and so it must be that 
+        \begin{equation}
+		\frac{1}{x_i+1}=\frac{1}{y_i+1}
+        \end{equation} which leads to $x_i=y_i$ for all $i$. For the reverse direction, we first assume that $x=y$. If this is the case, then $x_i=y_i$ for all $i$ in $1\leq i\leq n$, and we simply note as before that ${\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid} = 0$, and so $0 = \sum_{i=1}^{n}{\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid}=d_{arXiv}(x,y)$. \newline For the third condition, recall that for any real value $a,b\in\mathbb{R}$, we have that by the definition of taking the absolute value that $\mid a-b\mid = \mid b-a\mid$. Since $\frac{1}{x_i+1}$ and $\frac{1}{y_i+1}$ are both real values for all $i$, then it must be that 
+        \begin{equation}
+		\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid=\mid\frac{1}{y_i+1}-\frac{1}{x_i+1}\mid
+		\end{equation} for all $i$ in $1\leq i\leq n$. Thus, 
+        \begin{equation}
+		\sum_{i=1}^{n}{\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid}=\sum_{i=1}^{n}{\mid\frac{1}{y_i+1}-\frac{1}{x_i+1}\mid}
+		\end{equation} and so $d_{arXiv}(x,y)=d_{arXiv}(y,x)$. For the fourth condition, recall the following similar inequality: 
+        \begin{equation}
+		\mid a-b\mid \geq \mid a\mid - \mid b\mid\label{inequality}
+		\end{equation}
+		We start off by first computing the following: $d_{arXiv}(x,y)+d_{arXiv}(y,z)$. We apply the definition of our metric defined above and expand the sum in \ref{sum expansion}.
+        \begin{dmath}
+		d_{arXiv}(x,y)+d_{arXiv}(y,z) = \sum_{i=1}^{n}{\mid\frac{1}{x_i+1}-\frac{1}{y_i+1}\mid} + \sum_{i=1}^{n}{\mid\frac{1}{y_i+1}-\frac{1}{z_i+1}\mid} 
+		= {\mid\frac{1}{x_1+1}-\frac{1}{y_1+1}\mid} + {\mid\frac{1}{x_2+1}-\frac{1}{y_2+1}\mid} + ... + {\mid\frac{1}{x_n+1}-\frac{1}{y_n+1}\mid} 
+		+ {\mid\frac{1}{y_1+1}-\frac{1}{z_1+1}\mid} + {\mid\frac{1}{y_2+1}-\frac{1}{z_2+1}\mid} + ... + {\mid\frac{1}{y_n+1}-\frac{1}{z_n+1}\mid}\label{sum expansion}
+		\end{dmath}
+        We then apply equation \ref{inequality} to equation \ref{sum expansion} and simplify. Note that the $\frac{1}{y_i+1}$ terms for $i\in\ 1\leq i\leq n$ cancel.
+		\begin{dmath}
+		= \left({\mid\frac{1}{x_1+1}-\frac{1}{y_1+1}\mid} + {\mid\frac{1}{x_2+1}-\frac{1}{y_2+1}\mid} + ... + {\mid\frac{1}{x_n+1}-\frac{1}{y_n+1}\mid} + {\mid\frac{1}{y_1+1}-\frac{1}{z_1+1}\mid} + {\mid\frac{1}{y_2+1}-\frac{1}{z_2+1}\mid} + ... + {\mid\frac{1}{y_n+1}-\frac{1}{z_n+1}\mid}\right) \geq 
+		\left({\mid\frac{1}{x_1+1}\mid} + {\mid\frac{1}{x_2+1}\mid} + ... + {\mid\frac{1}{x_n+1}\mid} - {\mid\frac{1}{y_1+1}\mid} - {\mid\frac{1}{y_2+1}\mid} - ... - {\mid\frac{1}{y_n+1}\mid} + {\mid\frac{1}{y_1+1}\mid} + {\mid\frac{1}{y_2+1}\mid} + ... + {\mid\frac{1}{y_n+1}\mid} - {\mid\frac{1}{z_1+1}\mid} - {\mid\frac{1}{z_2+1}\mid} - ... - {\mid\frac{1}{z_n+1}\mid}\right)
+		= \left({\mid\frac{1}{x_1+1}-\frac{1}{y_1+1}\mid} + {\mid\frac{1}{x_2+1}-\frac{1}{y_2+1}\mid} + ... + {\mid\frac{1}{x_n+1}-\frac{1}{y_n+1}\mid} + {\mid\frac{1}{y_1+1}-\frac{1}{z_1+1}\mid} + {\mid\frac{1}{y_2+1}-\frac{1}{z_2+1}\mid} + ... + {\mid\frac{1}{y_n+1}-\frac{1}{z_n+1}\mid}\right) \geq 
+		\left({\mid\frac{1}{x_1+1}\mid} + {\mid\frac{1}{x_2+1}\mid} + ... + {\mid\frac{1}{x_n+1}\mid} - {\mid\frac{1}{z_1+1}\mid} - {\mid\frac{1}{z_2+1}\mid} - ... - {\mid\frac{1}{z_n+1}\mid}\right)\label{simplify}
+		\end{dmath}	
+       Note that in equation \ref{simplify} we also have the following:
+		\begin{dmath}
+		\left({\mid\frac{1}{x_1+1}\mid} + {\mid\frac{1}{x_2+1}\mid} + ... + {\mid\frac{1}{x_n+1}\mid} - {\mid\frac{1}{z_1+1}\mid} - {\mid\frac{1}{z_2+1}\mid} - ... - {\mid\frac{1}{z_n+1}\mid}\right)
+        = d_{arXiv}(x,z)
+		\end{dmath} 
+		Thus, $d_{arXiv}(x,z)\leq d_{arXiv}(x,y)+d_{arXiv}(y,z)$ as we have shown. Since this formula satisfies the four conditions listed above, and since $x$ and $y$ are arbitrary, the result follows.
+	\end{proof}
+    
+\par This metric proved to be an interesting metric once we saw the barcodes it produced for the 125 papers (see Figure \ref{pic-125papers-metric_01-bars}). In the persistence diagram showing the 1st dimension in Figure \ref{pic-125papers-metric_01} we see at least three instances where persistent barcodes appear.  
+\newline
+
+\begin{figure}[h]
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_metric_01-1st_125papers.png}
+  \caption{Persistence diagram}
+  \label{pic-125papers-metric_01}
+\end{subfigure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_metric_01-1st-bars_125papers.png}
+  \caption{Barcodes}
+  \label{pic-125papers-metric_01-bars}
+\end{subfigure}
+\caption{Persistent homology results for the 1st homology group using $d_{arXiv}$}
+\label{fig-125papers-metric_01}
+\end{figure}
+
+\par In our Mapper output, we do in fact see one hole in Figure \ref{pic-125papers-metric_01-mapper}. However, as before, we cannot make the conclusion that the persistent barcode seen in the persistent diagram occurring around $\epsilon\approx 0.3$ is the loop generated in the Mapper visualization output. One can speculate, however, how this loop did manage to appear by thinking about the clustering algorithm used and any lenses. In this case, we projected on the weights column in our DataFrame. Moreover, we happened to color by these values as well. Other than this projected, we used the Isolation Forest lens and the Multidimensional scaling lens. 
+
+\begin{figure}[h]
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot-metric_01-mapper_125papers.png}
+\caption{Mapper output for the 125 TDA papers using $d_{arXiv}(x,y)$, colored by weights}
+\label{pic-125papers-metric_01-mapper}
+\end{figure}
+
+\pagebreak
+
+\subsubsection{Discussion of the 125 TDA Papers}
+
+When we first encountered results from the Euclidean metric, we saw potential for interpretation. From the 0th dimension, after given a certain epsilon ($\epsilon\approx 15$) we would achieve just one cluster, a large simplex connecting all the 125 TDA papers. When we look at the 1st dimension, it is quite interesting to try to interpret the loops that could possibly have formed in our small subset. As a time constraint, we were not able to program our script to achieve this. However, we can still interpret this results as proof that our data has some form of shape. We could not achieve any results in the 2nd dimension, i.e. we could not create persistent homology for the 2nd homology group. This tells us that though our data has shape of loops, it does not have any voids in 3D space. 
+\newline
+\par As for the Manhattan metric, our results turned out a bit more promising. Unlike the Euclidean metric where persistent barcodes for the 1st homology group where spread out, in the Manhattan metric, we noticed a trend that as our epsilon grew, more and more loops would develop. The idea that this could happen is what sparked our interest when we decided to create our own metric. When we look at the persistent homology results for $d_{arXiv}$, there does indeed appear to be at least four persistent barcodes that represent loops in our point cloud of papers. These signify that there is some type of relationship among certain types of authors. 
+\newline
+\par When we interpret the Mapper visualization output for all of these three metrics, we take into consideration of what clustering algorithm we used, the epsilon parameter we chose, any projections (or lenses), and a color function (if one was defined). In all the three Mapper outputs given, a color function was defined by coloring by weights (the same weights from equation 1). As one can see in all three Mapper outputs, there is a pattern of how closely different nodes are close to each other based on color. This is simply because the weight values were also part of the data. to understand this, one must also understand any projections and the clustering algorithm used. In all three of the Mapper outputs, we projected onto the weights column in our DataFrame, onto the Euclidean L2-norm, and used an Isolation Forest lens. Given the persistent homology results, and given the three unique lenses we used, it is quite interesting to see a loop in the Mapper result that uses $d_{arXiv}(x,y)$. We can say that after looking at the persistent homology results and Mapper, this metric holds some promise for a larger subset. 
+
+\subsubsection{Roadblock}
+
+Initially, we tried to increase our subset by simply changing our script to read more query results from the online API that arXiv provides. However, we hit a roadblock when suddenly one day, we discovered that our IP address was no longer able to access arXiv's online API service. We immediately realized that our scripts that we were running were starting to look like "robots", i.e. arXiv's servers were detecting our requests as "mindless searches". We learned that this caused stress on arXiv's servers and that arXiv strictly prohibited this on their online website. We were not quite aware of this restriction until we became banned. 
+
+\subsubsection{Data Collection and Cleaning of the 2,285 Papers}
+
+After being banned from storing data directly from arXiv's API due to a na\"ive neglect of arXiv's restriction on automated downloads, we resorted to Amazon S3 and downloaded a considerable amount of papers (for \$1.00). To this data set, we performed a similar search as we did before with the 125 papers. We stored all of this information into a a dictionary and converted it into a dataframe where we could manipulate and add new information columns from previous columns. We started off with collecting author names and published date. From this, we used the other python modules, "PyPDF2" and "refextract", to get the number of pages per article and the number of references as well. Overall, we decided to collect 2,285 papers from the year 2000 ranging in the following subjects: astrophysics, condensed matter, physics, math, high energy physics, computer science, nuclear, nonlinear sciences, quantum physics, quantum cosmology, and general relativity.
+
+\subsubsection{Methods and Results of the 2,285 Papers}
+
+With the freedom to search over 2000 papers, we explored a much larger dimensional data set. In the end, we decided to create a dataframe that was 6 dimensional, containing the following features for each paper: weights (as defined by equation 1), number of pages, number of references, length of authors, length of summaries, and a time value depicting the published date. With this large data set, computing persistent homology became a challenge to our computers. As a result, when exploring Dionysus, we resorted to exploring various random samples of the data set. From these random sampling, we chose certain graphs that best represented the general shape of the data set given certain parameters. 
+\newline
+\par For the metric $d_{arXiv}(x,y)$ we explored two different epsilon values: 0.5 and 1.0. The epsilon values chosen are quite different than the epsilon values chosen for the 125 TDA papers. This is simply because the distance matrix produced had different magnitudes of values compared to the distance matrices for the 125 TDA papers. Figure \ref{pic-final-metric_01-1st-e0.5} shows the persistent diagram of the 1st dimension after applying the metric $d_{arXiv}(x,y)$ to the data set with an epsilon of 0.5. From the persistence diagram, a point around $\epsilon\approx 0.2$ can be spotted to appear far away from the diagonal. Figure \ref{pic-final-metric_01-1st-bars-e0.5} shows the respective barcodes, and as understood from the persistent diagram, a persistent barcode appear to start around $\epsilon\approx 0.2$. 
+
+\begin{figure}[h]
+\begin{subfigure}{0.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_metric_01_1st_e0_5.png}
+  \caption{Persistence diagram}
+  \label{pic-final-metric_01-1st-e0.5}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_metric_01_1st_bars_e0_5.png}
+  \caption{Barcodes}
+  \label{pic-final-metric_01-1st-bars-e0.5}
+\end{subfigure}
+\caption{Persistent homology for the 1st homology group using $d_{arXiv}(x,y)$ with an epsilon of 0.5 for a random sample the larger data set containing 2,285 papers}
+\label{fig-metric_01-1st-e0.5}
+\end{figure}
+
+\par For epsilon 1.0, at a glance, we get very similar results for the 1st homology group that do not look far off from the results produced by epsilon 0.5. In Figure \ref{pic-final-metric_01-1st-bars-e1.0} it is quite harder to see if there is a persistent barcode or not. However, if we look at the persistence diagram in Figure \ref{pic-final-metric_01-1st-e1.0}, there seems to be a potential candidate around $\epsilon\approx 0.2$. Despite changing the epsilon, we can attain a persistent homology generator around this epsilon of 0.2. 
+
+\begin{figure}[h]
+\begin{subfigure}{0.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_metric_01_1st_e1_0.png}
+  \caption{Persistence diagram}
+  \label{pic-final-metric_01-1st-e1.0}
+\end{subfigure}
+\begin{subfigure}{0.5\textwidth}
+  \centering
+  \includegraphics[scale=0.5]{pictures_arxiv/Figure_metric_01_1st_bars_e1_0.png}
+  \caption{Barcodes}
+  \label{pic-final-metric_01-1st-bars-e1.0}
+\end{subfigure}
+\caption{Persistent homology for the 1st homology group using $d_{arXiv}(x,y)$ with an epsilon of 1.0 for a random sample the larger data set containing 2,285 papers}
+\label{fig-metric_01-1st-e1.0}
+\end{figure}
+
+\par Once we explored the territory of Mapper, interesting results arose. The color function was made by creating an array of the academic categories that arXiv has to offer. For example, all papers belonging to "math" would be colored one certain color. While, all papers belonging to "physics" would be colored another certain color. 
+
+In Figure \ref{pic-final-mapper-pagenum-e0.5} we explored the data set with the metric $d_{arXiv}(x,y)$. The DBSCAN clustering algorithm was applied with an epsilon of 0.5. As for the lenses, we applied three lenses: the Isolation Forest lens, the Multidimensional Scaling lens, and a projection onto the number of pages column in our dataframe. 
+
+In Figure \ref{pic-final-mapper-pagenum-e1.0} we explored the data set with the metric $d_{arXiv}(x,y)$. The DBSCAN clustering algorithm was applied with an epsilon of 1.0. As for the lenses, we applied three lenses: the Isolation Forest lens, the Multidimensional Scaling lens, and a projection onto the number of pages column in our dataframe. 
+
+In Figure \ref{pic-final-mapper-ref-e0.5} we explored the data set with the metric $d_{arXiv}(x,y)$. The DBSCAN clustering algorithm was applied with an epsilon of 0.5. As for the lenses, we applied three lenses: the Isolation Forest lens, the Multidimensional Scaling lens, and a projection onto the number of references column in our dataframe. 
+
+In Figure \ref{pic-final-mapper-ref-e1.0} we explored the data set with the metric $d_{arXiv}(x,y)$. The DBSCAN clustering algorithm was applied with an epsilon of 1.0. As for the lenses, we applied three lenses: the Isolation Forest lens, the Multidimensional Scaling lens, and a projection onto the number of references column in our dataframe. 
+
+In Figure \ref{pic-final-mapper-time} we explored the data set with the metric $d_{arXiv}(x,y)$. The DBSCAN clustering algorithm was applied with an epsilon of 0.5. As for the lenses, we applied three lenses: the Isolation Forest lens, the Multidimensional Scaling lens, and a projection onto the time column in our dataframe. 
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot_MAPPER_final_pagenum_e05.png}
+\end{center}
+\caption{Mapper output projecting onto the number of page numbers using $d_{arXiv}(x,y)$ with an epsilon of 0.5 for larger data set, colored by academic categories}
+\label{pic-final-mapper-pagenum-e0.5}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot_MAPPER_final_pagenum_e10.png}
+\end{center}
+\caption{Mapper output projecting onto the number of page numbers using $d_{arXiv}(x,y)$ with an epsilon of 1.0 for larger data set, colored by academic categories}
+\label{pic-final-mapper-pagenum-e1.0}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot_MAPPER_final_ref_e05.png}
+\end{center}
+\caption{Mapper output projecting onto the number of references using $d_{arXiv}(x,y)$ with an epsilon of 0.5 for larger data set, colored by academic categories}
+\label{pic-final-mapper-ref-e0.5}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot_MAPPER_final_ref_e10.png}
+\end{center}
+\caption{Mapper output projecting onto the number of references using $d_{arXiv}(x,y)$ with an epsilon of 1.0 for larger data set, colored by academic categories}
+\label{pic-final-mapper-ref-e1.0}
+\end{figure}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth]{pictures_arxiv/Screenshot_MAPPER_final_time_e05.png}
+\end{center}
+\caption{Mapper output projecting onto the time value representing the published date using $d_{arXiv}(x,y)$ with an epsilon of 0.5 for larger data set, colored by academic categories}
+\label{pic-final-mapper-time}
+\end{figure}
+
+\subsubsection{Discussion of the 2,285 Papers}
+
+From looking at the persistent homology results for the 2,285 papers, we can make the conclusion that our data set has a shape and that there appears to be at least one loop in this point cloud of papers. From this, we know that there are hidden relationships in our higher dimensional data. From both epsilon values (0.5 and 1.0) we were able to retrieve persistent homology results that indicate some form of relationship as epsilon increased. When we look at Mapper, the visualization also confirms that there is a relationship in this topological space we have created from the 2,285 papers. If we look at the Mapper results, in all outputs, it is interesting to see clustering based on color. Because academic categories was not a feature (column) in our dataframe, its correspondence to the topological space is independent. 
+\newline 
+\par In Figure \ref{pic-final-mapper-pagenum-e0.5}, we can see two main clusters connected by a few papers (nodes). In the cluster on the top left, there seems to be a separation of flares by colors. The cluster also seems to be "wanting" to split into two smaller clusters as there seems to be a "pinch" when we near the green/yellow nodes. We can interpret this as a certain divide in forms of papers in the academic fields representing these green/yellow nodes. One could speculate that these fields tend to publish two very drastically different types of papers. It is interesting to note that there are some uniformly colored, smaller clusters surrounding the two big clusters.These small clusters represent papers that are very similar to each other though not similar to the rest of the papers as  whole. When we look at the cluster on the bottom right, we can see a big red flare shaped like a "y". We can interpret the large clustering based on color to indicate the following conclusion: papers in similar academic fields tend to produce papers with similar page numbers. 
+\newline 
+\par More specifically, papers in the blue, physics and mathematics, tend to follow this trend. The red represents Nuclear Physics and since this is still a fairly new field, fewer papers have been published and so fewer nodes appear. It is interesting to see that these papers are clustered so closely together. The reason we can say that papers in clusters have similar number of pages is because if one recalls, one of our Mapper projections is a lens representing the number of pages per paper. If we look at Figure \ref{pic-final-mapper-pagenum-e1.0}, we see a very similar shape in the visualization. Like in the persistent homology results, increasing the epsilon value from 0.5 to 1.0 did not drastically change the results. The same applies for the Mapper visualization here. We still see two main clusters separated by a one or a few nodes (papers). There is still the same color distinction as the previous Mapper result. 
+\newline
+\par Now, if we look at Figure \ref{pic-final-mapper-ref-e0.5}, we are now seeing a projection onto the number of references instead of the number of pages. The epsilon here is 0.5, and the color function is the same (array of academic categories). Interestingly enough, the shape that appears in this output is somewhat similar to the Mapper output that used a projection of the number of pages per paper. We see two main clusters connected by one or a few nodes (papers), and there again seems to be a color distinction. As we have seen in the previous two Mapper outputs, the cluster on the top left seems to have three main colors (blue, green, yellow). As before, this cluster has the appearance of wanting to "split" into two smaller clusters. Also like before, we have red colored flares in the bottom right cluster. From all of this, given the apparant colored clusters and shape, we can conclude the following: papers with in similar academic fields tend to produce papers with similar amounts of references listed. It is quite interesting to see this trend in both the number of pages per paper and the number of references per paper. One could speculate that the longer the paper is the more references this paper has. Again, as before, increasing the epsilon from 0.5 to 1.0 does not change the Mapper output drastically. In Figure \ref{pic-final-mapper-ref-e1.0} we see a very similar shape as was seen in the previous Mapper output with an epsilon of 0.5. The top left cluster still appears to want to "separate" and there still appears to be a red flare on the bottom right. The two clusters are also connected by a few nodes. 
+\newline
+\par Finally, if we look at Figure \ref{pic-final-mapper-time}, we see the similar shape. There appears to be two clusters connected by a few nodes. The top left cluster is clustered by color and appears to want to "separate". The bottom right cluster has a red flare. Because we are dealing published time dates, and we still see this trend of colored clusters, one can make the conclusion that certain papers in certain academic fields tend to publish on similar times together.  
+
+\section{Summary and Conclusions}
+
+In this paper, we have explored the topics of Topological Data Analysis and some aiding tools such as the Mapper algorithm. After being acquainted with the concepts from general topology and algebraic topology, we emulated the computational process for Persistent Homology and visual outputs with the data sets provided by the MET and arXiv. Mostly utilizing the Python programming language, we were able to obtain some original interpretations of the structure of the provided data clouds. 
+\newline
+\par In the MET project, Mapper has been shown as an effective tool to guide feature selection. Coloring the Mapper output by the variable that we would like to predict helps identify associated significant features. Persistent homology has been employed to classify two subsets of artworks. Using our results, we may differentiate between samples from these two subsets by looking at their barcode graphs and distribution of features.
+\newline
+\par In the arXiv project, interesting results have been found using the metric $d_{arXiv}(x,y)$ both in Dionysus and in Mapper. With the 125 TDA papers we found promising results that led to further exploration in the 2,285 papers. After gathering all the data results from Mapper and Dionysus, we've noticed a few trends in the shape of the data set that we can summarize. We notice from our data set that papers in physics and math (blue and green) tend to be similar in number of pages and have similar number of references listed. The same goes for the red flares, which indicate the papers published in Nuclear physics. Interpreting these results means that we have found trends in how papers in different fields tend to publish or submit.  
+
+\section{Future Work}
+
+\par Concerning the MET database: Since our data had categorical string values, the next step could be to use word classification techniques and machine learning. There have already been implementations of Mapper with semantic meaning, so it is reasonable to think that more underlying relationships in the data set can be revealed with a metric that captures more information (see Appendix). We might expect to see more persistent topological features given a more developed metric.
+\newline
+\par By creating mathematical models representing topological features in our data, such as a loop or void, one may further classify the data to make a comparison to standard statistical models in terms of their accuracy and prediction.
+\newline 
+\par As many of the models currently being employed in machine learning have their theoretical backgrounds in statistics, the application of topological approach also brings a diverse yet unique perspective within the realm of data analysis. A  significant advantage of topological approach versus the conventional statistical approach is that the framework of TDA allows more flexibility. For an instance, the topological alternative to data analysis can be regarded as more general procedure in comparison to the statistical methods, as the statistical models are often restricted in their dimensions and the assumptions that must follow in order for the distributions to correctly map the predictions. With all these advantages paired with the unique insight offered by the topological framework, further exploration of such discipline should be a worthwhile research. 
+\newline
+\par Concerning the arXiv data set: Near the end of the project timeline, we delved into experimenting with the Jaccard metric in analyzing the similarity between author names of papers and the similarity between words in summaries of papers. By adding the similarity between authors of papers and the similarity between words in summaries of papers, one is able to describe a metric that measures how similar two papers are in terms of their content. A future exploration in applying persistent homology and understanding its possible Mapper output would be another promising research project. 
+
+\section{Acknowledgements}
+
+We would like to thank Professor Ortiz for his mentorship and the opportunity to work on this project. Thank you for all the detailed feedback and support. We would also like to thank the authors of Kepler Mapper \cite{keppler-mapper}, Javaplex \cite{Javaplex}, and Dionysus \cite{Dionysus} as well the authors of the Python packages Pandas \cite{pandas} , sklearn \cite{scikit-learn}, scipy \cite{scipy}, and statsmodels \cite{StatsModels}. Finally, we would like to thank Grinnell College for funding this MAP. 
+
+\subsection{Appendix}
+\subsubsection{Metric}
+\begin{enumerate}
+\item Our initial metric for categorical variables is Levenshtein distance\cite{lev_1966_distance}, since at that stage, we try to measure the distance between two string values without parsing them. However, since this distance measures the minimum edits needed for transforming a string to the other string, we think it is not an accurate metric for our categorical variables. Then we decide to extract meaningful words from strings and count the number of common words in two strings. To limit the distance between 0-1, we divide it by the length of the longer string. However, this metric does not satisfy the triangle inequality.
+
+\item Around Week 7, we find that our metric does not satisfy the ``only if'' part of Requirement 1 for a metric (see Definition 6)., since two different artworks may have the same values for all the other features. Since "Object ID" is unique for each artwork, it can be used to differentiate between two artworks. Then we decide to include "Object ID" in our metric. 
+
+\item We think that there is possible future work with nltk, a metric that can explore the semantic relationship between words in categorical variables. We start defining a metric based on the path-similarity between words. There are also some challenges. Firstly, some specialized words are not in the given corpus. For these we have to decide whether to drop these values or to group them in a larger category (for example, the Medium ``silverpoint'' would be grouped under ``metalpoint''). Another challenge is automatically selecting which meaning of each word to use. However, we feel this direction has potential because it should give more nuanced distance between points.
+\end{enumerate}
+
+\subsubsection{Mapper}
+\begin{enumerate}
+\item We have tried different filter functions before we decide to use MDS. Initially, we try to project to columns of the data set. See Figure \ref{kmodes_pic} for an example. 
+\item Since our data is mixed, we have wanted to find clustering algorithm that would handle both categorical and numerical data. We use both K-prototypes and K-modes. Figure \ref{kmodes_pic} shows output from Mapper using K-modes clustering algorithm \cite{Kmodes_Algorithm}. K-modes is technically meant to be used only with categorical data, we included numerical data. Two disadvantages emerge with K-family clustering algorithms. One is computational time and the other is pre-initalizing clusters. 
+\begin{figure}
+\includegraphics[scale=0.5]{pictures_met/kmodes.PNG}
+\caption{Initial exploration with kmodes clustering algorithm, projected onto Width and Length columns, colored by row index in data set}
+\label{kmodes_pic}
+\end{figure}
+\end{enumerate}
+\subsubsection{Persistent Homology}
+\begin{enumerate}
+\item We observe that ``Artist Begin Date'' and ``Artist End Date'' are the two features with the most missing values among all the selected features. Thus, we decide to compare the Mapper data set and the contrast data set.
+\item Initially, we generate barcode graphs using live.ripser.org\cite{Ripser}. To extract more information from the barcodes, we explore Dionysus, but we could not figure out the ReducedMatrix Class (probably due to our inexperience in Python). Finally we switch to javaPlex, and are able to extract elements that form the homology generators indicated by the barcodes.
+\end{enumerate}
+
+\bibliographystyle{plain}
+\bibliography{sources}
+
+\end{document}
